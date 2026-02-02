@@ -6,10 +6,10 @@ resolution = true
 skip-lint = false
 
 [programs.devnet]
-shuffle_protocol = "CKY745NiqwoWTgQMQZd8No9kNG5w9PbkBXee5sDfM8LF"
+shuffle_protocol = "CPaXkQZsWgJ47abuwAoCX61cSu5CZHSB4P4ETd3Rc5xU"
 
 [programs.localnet]
-shuffle_protocol = "BTkoaa5qpCkGPPpL3sXHLByo6tzzjKdvonU8VapPxXuc"
+shuffle_protocol = "CPaXkQZsWgJ47abuwAoCX61cSu5CZHSB4P4ETd3Rc5xU"
 
 [registry]
 url = "https://api.apr.dev"

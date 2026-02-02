@@ -18,10 +18,10 @@ export const MOCK_MODE = false;
 
 /**
  * Localnet program configuration (from arcium test)
- * UPDATE THIS when network restarts!
+ * NOTE: This is automatically updated by setup-local.js
  */
 export const LOCALNET_CONFIG = {
-  programId: new PublicKey("BzaakuSahkVtEXKqZnD9tSPBoiJCMLa1nzQHUjtY1xRM"),
+  programId: new PublicKey("CPaXkQZsWgJ47abuwAoCX61cSu5CZHSB4P4ETd3Rc5xU"),
   rpcUrl: "http://127.0.0.1:8899",
 };
 

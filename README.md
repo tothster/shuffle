@@ -7,16 +7,55 @@
 ╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═╝     ╚═╝     ╚══════╝╚══════╝
 ```
 
-# The Missing Privacy Layer for Solana DeFi
+## 🛠️ Local Development Setup
 
-> **Private trading. Public liquidity. Best execution.**
+Run Shuffle Protocol locally with Arcium MPC on a local Solana validator.
 
-[![Solana](https://img.shields.io/badge/Solana-Hackathon-9945FF?style=for-the-badge&logo=solana)](https://solana.com)
-[![Arcium](https://img.shields.io/badge/Arcium-MPC%20Track-6366F1?style=for-the-badge)](https://arcium.com)
-[![Helius](https://img.shields.io/badge/Helius-RPC%20%2B%20Cranker-FF6B00?style=for-the-badge)](https://helius.dev)
+### Requirements
+
+| Tool | Version | Installation |
+|------|---------|--------------|
+| **Node.js** | v18+ | [nodejs.org](https://nodejs.org/) |
+| **Rust** | Latest | [rustup.rs](https://rustup.rs/) |
+| **Solana CLI** | v1.18+ | [docs.solana.com](https://docs.solana.com/cli/install-solana-cli-tools) |
+| **Anchor CLI** | v0.30+ | [anchor-lang.com](https://www.anchor-lang.com/docs/installation) |
+| **Arcium CLI** | v0.6+ | [docs.arcium.com](https://docs.arcium.com/getting-started/installation) |
+| **Docker** | Latest | [docker.com](https://docs.docker.com/get-docker/) |
+
+### Quick Start
+
+```bash
+# 1. Verify environment (checks all requirements)
+npm run check:env
+
+# 2. Install all dependencies (contract + SDK)
+npm run install:all
+
+# 3. Start local environment (Solana + Arcium nodes)
+npm run setup:local
+
+# 4. Use the CLI (in another terminal)
+shuffle --network localnet init
+shuffle --network localnet balance
+
+# 5. When done, cleanup
+npm run clean
+```
+
+### Available Scripts
+
+| Script | Description |
+|--------|-------------|
+| `npm run check:env` | Validate all dependencies are installed |
+| `npm run install:all` | Install contract (yarn) + SDK (npm) + link CLI |
+| `npm run setup:local` | Build & start local Solana + Arcium validators |
+| `npm run build` | Build the Anchor program with Arcium |
+| `npm run test` | Run full test suite |
+| `npm run clean` | Stop validators & cleanup test artifacts |
+
+> **Note:** Docker must be running before executing `npm run setup:local`. The script will validate this automatically.
 
 ---
-
 ## 🎯 The Problem
 
 **$1.5B+ extracted by MEV bots on Solana annually.** Every trade signals your intentions to the entire network. Bots frontrun you. Competitors see your accumulation strategy. Institutions can't place large orders without moving markets.
@@ -176,20 +215,6 @@ console.log("USDC:", balances.usdc);
 
 <!-- TODO: Add demo video link -->
 > 🎥 **Video Demo**: [[Link]](https://drive.google.com/file/d/1XJjiBkKVjA-4BHtwMCafhziieIOoUlX0/view)
-
-### Run Locally
-
-```bash
-# Clone and setup
-git clone https://github.com/your-repo/sol-privacy-mvp
-cd sol-privacy-mvp/contract
-
-# Build with Arcium
-arcium build
-
-# Run tests
-arcium test
-```
 
 ---
 

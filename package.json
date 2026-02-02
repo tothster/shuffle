@@ -1,0 +1,23 @@
+{
+    "name": "shuffle-protocol",
+    "version": "0.1.0",
+    "private": true,
+    "description": "Shuffle Protocol - Privacy-preserving DEX on Solana",
+    "scripts": {
+        "check:env": "node scripts/check-env.js",
+        "install:all": "node scripts/install-all.js",
+        "setup:local": "node scripts/setup-local.js",
+        "clean": "node scripts/clean.js",
+        "build": "cd contract && arcium build",
+        "test": "cd contract && arcium test",
+        "test:full": "cd contract && arcium test"
+    },
+    "engines": {
+        "node": ">=18.0.0"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/tothster/shuffle"
+    },
+    "license": "MIT"
+}

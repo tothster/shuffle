@@ -1,7 +1,7 @@
 import { PublicKey } from "@solana/web3.js";
 
-// Program ID (localnet default from Anchor.toml)
-export const PROGRAM_ID = new PublicKey("BzaakuSahkVtEXKqZnD9tSPBoiJCMLa1nzQHUjtY1xRM");
+// Program ID (same for localnet and devnet)
+export const PROGRAM_ID = new PublicKey("CPaXkQZsWgJ47abuwAoCX61cSu5CZHSB4P4ETd3Rc5xU");
 
 // Asset IDs matching contract/programs/shuffle_protocol/src/constants.rs
 export enum AssetId {

@@ -43,7 +43,7 @@ const COMP_DEF_OFFSET_CALCULATE_PAYOUT: u32 = comp_def_offset("calculate_payout"
 // This is the unique address of our deployed program on Solana.
 //
 
-declare_id!("BTkoaa5qpCkGPPpL3sXHLByo6tzzjKdvonU8VapPxXuc");
+declare_id!("CPaXkQZsWgJ47abuwAoCX61cSu5CZHSB4P4ETd3Rc5xU");
 
 // Shuffle Protocol - A privacy-preserving DeFi protocol for private DCA into tokenized stocks
 //
