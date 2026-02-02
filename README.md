@@ -175,7 +175,7 @@ console.log("USDC:", balances.usdc);
 ## 🎬 Demo
 
 <!-- TODO: Add demo video link -->
-> 🎥 **Video Demo**: [Coming Soon]
+> 🎥 **Video Demo**: [[Link]](https://drive.google.com/file/d/1XJjiBkKVjA-4BHtwMCafhziieIOoUlX0/view)
 
 ### Run Locally
 
