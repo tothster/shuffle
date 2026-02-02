@@ -45,7 +45,7 @@ const COMP_DEF_OFFSET_CALCULATE_PAYOUT: u32 = comp_def_offset("calculate_payout"
 // This is the unique address of our deployed program on Solana.
 //
 
-declare_id!("J5B3CHigkr6Tiz9iRACMNk355uY5wFpVCq6847urV3Et");
+declare_id!("DQ29rUToHVTyp2QxP3C7nt1MuYp6p6PKYNaDpGooPAFq");
 
 // Shuffle Protocol - A privacy-preserving DeFi protocol for private DCA into tokenized stocks
 //
@@ -696,14 +696,7 @@ pub mod shuffle_protocol {
     // =========================================================================
 
     pub fn init_add_together_comp_def(ctx: Context<InitAddTogetherCompDef>) -> Result<()> {
-        init_comp_def(
-            ctx.accounts,
-            Some(CircuitSource::OffChain(OffChainCircuitSource {
-                source: "https://gateway.pinata.cloud/ipfs/QmQ4Jd2KEQZXPzE5xgXGQTz8BjtF4BHemSsjXWaE3QTuGT".to_string(),
-                hash: circuit_hash!("add_together"),
-            })),
-            None,
-        )?;
+        init_comp_def(ctx.accounts, None, None)?;
         Ok(())
     }
 
@@ -714,70 +707,35 @@ pub mod shuffle_protocol {
     /// Initialize the add_balance computation definition.
     /// This must be called once before any encrypted deposits can be processed.
     pub fn init_add_balance_comp_def(ctx: Context<InitAddBalanceCompDef>) -> Result<()> {
-        init_comp_def(
-            ctx.accounts,
-            Some(CircuitSource::OffChain(OffChainCircuitSource {
-                source: "https://gateway.pinata.cloud/ipfs/QmdbkwigmEYcXPaDGdFJYhVKGC2c1WDfznBBxt8Rc1vZmM".to_string(),
-                hash: circuit_hash!("add_balance"),
-            })),
-            None,
-        )?;
+        init_comp_def(ctx.accounts, None, None)?;
         Ok(())
     }
 
     /// Initialize the accumulate_order computation definition (Phase 8).
     /// This must be called once before orders can be placed.
     pub fn init_accumulate_order_comp_def(ctx: Context<InitAccumulateOrderCompDef>) -> Result<()> {
-        init_comp_def(
-            ctx.accounts,
-            Some(CircuitSource::OffChain(OffChainCircuitSource {
-                source: "https://gateway.pinata.cloud/ipfs/QmS812p35akHhFK2yQwGynvjpkPZRV3RjUjdBEC4QJYdwp".to_string(),
-                hash: circuit_hash!("accumulate_order"),
-            })),
-            None,
-        )?;
+        init_comp_def(ctx.accounts, None, None)?;
         Ok(())
     }
 
     /// Initialize the init_batch_state computation definition (Phase 8).
     /// This must be called once for batch initialization.
     pub fn init_init_batch_state_comp_def(ctx: Context<InitInitBatchStateCompDef>) -> Result<()> {
-        init_comp_def(
-            ctx.accounts,
-            Some(CircuitSource::OffChain(OffChainCircuitSource {
-                source: "https://gateway.pinata.cloud/ipfs/QmbBzp7G3o2KqGPFdzjB5Y7ioujpvR5TT54bpLsoo7QZv7".to_string(),
-                hash: circuit_hash!("init_batch_state"),
-            })),
-            None,
-        )?;
+        init_comp_def(ctx.accounts, None, None)?;
         Ok(())
     }
 
     /// Initialize the reveal_batch computation definition (Phase 9).
     /// This must be called once before batch execution.
     pub fn init_reveal_batch_comp_def(ctx: Context<InitRevealBatchCompDef>) -> Result<()> {
-        init_comp_def(
-            ctx.accounts,
-            Some(CircuitSource::OffChain(OffChainCircuitSource {
-                source: "https://gateway.pinata.cloud/ipfs/Qmc311AdUo1eE7Pm8F8ctDEfX5FJ2SQ4ATDvJi4YXMjmQ8".to_string(),
-                hash: circuit_hash!("reveal_batch"),
-            })),
-            None,
-        )?;
+        init_comp_def(ctx.accounts, None, None)?;
         Ok(())
     }
 
     /// Initialize the calculate_payout computation definition (Phase 10).
     /// This must be called once before settlements can be processed.
     pub fn init_calculate_payout_comp_def(ctx: Context<InitCalculatePayoutCompDef>) -> Result<()> {
-        init_comp_def(
-            ctx.accounts,
-            Some(CircuitSource::OffChain(OffChainCircuitSource {
-                source: "https://gateway.pinata.cloud/ipfs/QmT8bDc6mba5H3bpAJrtDFBYnSTKLKoMFxhm6TmnMNHSnA".to_string(),
-                hash: circuit_hash!("calculate_payout"),
-            })),
-            None,
-        )?;
+        init_comp_def(ctx.accounts, None, None)?;
         Ok(())
     }
 
@@ -1034,14 +992,7 @@ pub mod shuffle_protocol {
     /// Initialize the sub_balance computation definition.
     /// This must be called once before any encrypted withdrawals can be processed.
     pub fn init_sub_balance_comp_def(ctx: Context<InitSubBalanceCompDef>) -> Result<()> {
-        init_comp_def(
-            ctx.accounts,
-            Some(CircuitSource::OffChain(OffChainCircuitSource {
-                source: "https://gateway.pinata.cloud/ipfs/QmSfQjsdRAiXEU9b8qH2d1fgmyn1P7wcRCd28DE1e5Y3nC".to_string(),
-                hash: circuit_hash!("sub_balance"),
-            })),
-            None,
-        )?;
+        init_comp_def(ctx.accounts, None, None)?;
         Ok(())
     }
 
@@ -1238,14 +1189,7 @@ pub mod shuffle_protocol {
     /// Initialize the transfer computation definition.
     /// This must be called once before any P2P transfers can be processed.
     pub fn init_transfer_comp_def(ctx: Context<InitTransferCompDef>) -> Result<()> {
-        init_comp_def(
-            ctx.accounts,
-            Some(CircuitSource::OffChain(OffChainCircuitSource {
-                source: "https://gateway.pinata.cloud/ipfs/QmQAK9JvndSP3YePGq9ciSeuCk8boHfQy5xi3RZTHS9iDW".to_string(),
-                hash: circuit_hash!("transfer"),
-            })),
-            None,
-        )?;
+        init_comp_def(ctx.accounts, None, None)?;
         Ok(())
     }
 

@@ -196,10 +196,14 @@ export async function loadConfig(opts: {
 
   let shuffleClient: ShuffleClient | null = null;
 
-  // Select program ID based on network
-  const programId = network === "localnet" 
-    ? LOCALNET_CONFIG.programId 
+  // Select program ID and cluster offset based on network
+  const programId = network === "localnet"
+    ? LOCALNET_CONFIG.programId
     : DEVNET_CONFIG.programId;
+
+  const clusterOffset = network === "localnet"
+    ? 0
+    : DEVNET_CONFIG.clusterOffset;
 
   if (!mockMode) {
     try {
@@ -207,7 +211,7 @@ export async function loadConfig(opts: {
         connection,
         wallet,
         programId,
-        clusterOffset: 0,
+        clusterOffset,
       });
       shuffleClient.initEncryption(encryptionPrivateKey);
     } catch (e: any) {

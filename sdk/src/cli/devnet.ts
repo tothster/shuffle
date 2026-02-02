@@ -21,7 +21,7 @@ export const MOCK_MODE = false;
  * NOTE: This is automatically updated by setup-local.js
  */
 export const LOCALNET_CONFIG = {
-  programId: new PublicKey("CPaXkQZsWgJ47abuwAoCX61cSu5CZHSB4P4ETd3Rc5xU"),
+  programId: new PublicKey("DQ29rUToHVTyp2QxP3C7nt1MuYp6p6PKYNaDpGooPAFq"),
   rpcUrl: "http://127.0.0.1:8899",
 };
 
@@ -29,11 +29,11 @@ export const LOCALNET_CONFIG = {
  * Devnet program and token configuration
  */
 export const DEVNET_CONFIG = {
-  // Program ID from successful devnet deployment (2026-02-01)
-  programId: new PublicKey("BzaakuSahkVtEXKqZnD9tSPBoiJCMLa1nzQHUjtY1xRM"),
+  // Program ID from successful devnet deployment (2026-02-02 v0.7.0 with off-chain circuits)
+  programId: new PublicKey("J5B3CHigkr6Tiz9iRACMNk355uY5wFpVCq6847urV3Et"),
   rpcUrl: "https://devnet.helius-rpc.com/?api-key=a8e1a5ce-29c6-4356-b3f9-54c1c650ac08",
-  
-  // Arcium cluster offset for v0.6.3 (required for account derivations)
+
+  // Arcium cluster offset for v0.7.0 (required for account derivations)
   clusterOffset: 456,
   
   // Token mints - deployed 2026-02-01

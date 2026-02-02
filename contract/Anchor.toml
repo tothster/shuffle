@@ -15,7 +15,7 @@ shuffle_protocol = "DQ29rUToHVTyp2QxP3C7nt1MuYp6p6PKYNaDpGooPAFq"
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "devnet"
+cluster = "localnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
