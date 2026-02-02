@@ -34,26 +34,67 @@ npm run install:all
 # 3. Start local environment (Solana + Arcium nodes)
 npm run setup:local
 
-# 4. Use the CLI (in another terminal)
-shuffle --network localnet init
-shuffle --network localnet balance
+# 4. Use the CLI (in another terminal) - see Testing Flow below
 
 # 5. When done, cleanup
 npm run clean
 ```
 
-### Available Scripts
+### Testing the Full Flow
 
-| Script | Description |
-|--------|-------------|
-| `npm run check:env` | Validate all dependencies are installed |
-| `npm run install:all` | Install contract (yarn) + SDK (npm) + link CLI |
-| `npm run setup:local` | Build & start local Solana + Arcium validators |
-| `npm run build` | Build the Anchor program with Arcium |
-| `npm run test` | Run full test suite |
-| `npm run clean` | Stop validators & cleanup test artifacts |
+After `npm run setup:local` completes, test the protocol in another terminal.
 
-> **Note:** Docker must be running before executing `npm run setup:local`. The script will validate this automatically.
+> **Note:** The setup already created 7 test users with orders. Your order will be the 8th, triggering batch execution!
+
+```bash
+# 1. Initialize your privacy account
+shuffle init
+# ✔ Privacy account created!
+
+# 2. Get test USDC
+shuffle faucet 1000
+# ✔ Minted 1000 USDC to your wallet
+
+# 3. Shield (deposit) tokens into privacy account
+shuffle deposit USDC 500
+# ✔ Deposited 500 USDC
+
+# 4. Check your shielded balance
+shuffle balance
+# Token   🔒 Shielded   🔓 Unshielded
+# USDC        500.00         500.00
+
+# 5. Place an order (this is the 8th order - triggers batch!)
+shuffle order
+# ✔ Order placed! Batch 1, Position 8/8
+# 🎉 Batch ready for execution!
+
+# 6. Execute the batch (MPC computation in TEE)
+shuffle execute
+# ✔ Batch executed! Orders matched and settled.
+
+# 7. Check balance (lazy settlement shows pending payout)
+shuffle balance
+# Token   🔒 Shielded   🔓 Unshielded
+# USDC        400.00         500.00
+# TSLA         10.00           0.00   ← Your filled order!
+
+# 8. Settle to claim your payout
+shuffle settle
+# ✔ Settlement complete!
+
+# 9. Continue trading - place more orders
+shuffle order
+```
+
+> **Multi-user testing:** Create additional users with `--user`:
+> ```bash
+> shuffle --user alice airdrop 2   # Get SOL first
+> shuffle --user alice init
+> shuffle --user alice faucet 1000
+> shuffle --user alice deposit USDC 500
+> shuffle --user alice order
+> ```
 
 ---
 ## 🎯 The Problem
