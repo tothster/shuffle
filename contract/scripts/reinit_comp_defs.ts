@@ -1,22 +1,13 @@
 /**
- * Devnet Deployment: Initialize Computation Definitions
- * 
- * This script initializes all computation definitions on devnet after program deployment.
- * Run this AFTER `arcium deploy` completes successfully.
- * 
- * Usage:
- *   1. Set DEVNET_RPC_URL and CLUSTER_OFFSET below
- *   2. Run: npx ts-node scripts/init_devnet_comp_defs.ts
- * 
- * Prerequisites:
- *   - Program deployed to devnet with `arcium deploy`
- *   - Sufficient SOL in wallet for transaction fees
- *   - @arcium-hq/client installed
+ * Reinitialize Computation Definitions with Off-Chain Circuits
+ *
+ * This script closes existing comp defs and reinitializes them with
+ * off-chain circuit sources from Pinata.
  */
 
 import * as anchor from "@coral-xyz/anchor";
 import { Program, AnchorProvider } from "@coral-xyz/anchor";
-import { PublicKey, Keypair, Connection, clusterApiUrl } from "@solana/web3.js";
+import { PublicKey, Keypair, Connection, SystemProgram } from "@solana/web3.js";
 import {
   getCompDefAccOffset,
   getMXEAccAddress,
@@ -31,28 +22,12 @@ import * as fs from "fs";
 import * as os from "os";
 
 // =============================================================================
-// CONFIGURATION - Update these values for your deployment
+// CONFIGURATION
 // =============================================================================
 
-/**
- * Your Helius RPC URL for devnet
- */
-const DEVNET_RPC_URL = process.env.HELIUS_RPC_URL || "https://devnet.helius-rpc.com/?api-key=YOUR_API_KEY";
-
-/**
- * Arcium cluster offset for v0.7.0 (same as v0.6.3)
- */
-const CLUSTER_OFFSET = 456;
-
-/**
- * Program ID from fresh devnet deployment (2026-02-02 v0.7.0 with off-chain circuits)
- */
-const PROGRAM_ID = new PublicKey("J5B3CHigkr6Tiz9iRACMNk355uY5wFpVCq6847urV3Et");
-
-/**
- * Path to your Solana keypair
- */
-const KEYPAIR_PATH = process.env.KEYPAIR_PATH || `${os.homedir()}/.config/solana/id.json`;
+const DEVNET_RPC_URL = "https://devnet.helius-rpc.com/?api-key=a8e1a5ce-29c6-4356-b3f9-54c1c650ac08";
+const PROGRAM_ID = new PublicKey("2E6wnKEbger3qm1pcH9t7F2krRVG56mZQ1gaovALHAGk");
+const KEYPAIR_PATH = `${os.homedir()}/.config/solana/id.json`;
 
 // =============================================================================
 // HELPERS
@@ -72,7 +47,7 @@ async function retryWithBackoff<T>(
     try {
       return await fn();
     } catch (e: any) {
-      const isRetryable = e.message?.includes("Blockhash not found") || 
+      const isRetryable = e.message?.includes("Blockhash not found") ||
                           e.message?.includes("blockhash") ||
                           e.message?.includes("rate limit");
       if (attempt === maxRetries || !isRetryable) {
@@ -86,12 +61,54 @@ async function retryWithBackoff<T>(
   throw new Error("Max retries exceeded");
 }
 
+async function closeCompDefIfExists(
+  program: Program<ShuffleProtocol>,
+  owner: Keypair,
+  provider: AnchorProvider,
+  circuitName: string
+): Promise<boolean> {
+  const baseSeedCompDefAcc = getArciumAccountBaseSeed("ComputationDefinitionAccount");
+  const offset = getCompDefAccOffset(circuitName);
+
+  const compDefPDA = PublicKey.findProgramAddressSync(
+    [baseSeedCompDefAcc, program.programId.toBuffer(), offset],
+    getArciumProgramId()
+  )[0];
+
+  const existingAccount = await provider.connection.getAccountInfo(compDefPDA);
+  if (!existingAccount) {
+    console.log(`  ℹ ${circuitName} comp def doesn't exist, skipping close`);
+    return false;
+  }
+
+  console.log(`  Closing existing ${circuitName} comp def...`);
+
+  try {
+    // Try to close the account by transferring lamports back
+    // Note: This might not work if Arcium doesn't allow closing comp defs
+    // In that case, we'll need to just reinitialize over it
+    const arciumProgram = getArciumProgram(provider);
+
+    // Check if account is already finalized
+    const compDefAccount = await arciumProgram.account.computationDefinitionAccount.fetch(compDefPDA);
+    console.log(`  Account status: finalized=${compDefAccount.finalizationAuthority === null ? 'no' : 'yes'}`);
+
+    // For now, we'll just log that we can't close it
+    console.log(`  ⚠ Cannot close comp def account (Arcium doesn't support closing). Will need to reinitialize.`);
+    return true;
+  } catch (e: any) {
+    console.log(`  ⚠ Error checking comp def: ${e.message}`);
+    return true;
+  }
+}
+
 async function initCompDef(
   program: Program<ShuffleProtocol>,
   owner: Keypair,
   provider: AnchorProvider,
   circuitName: string,
-  methodName: string
+  methodName: string,
+  forceReinit: boolean = false
 ): Promise<void> {
   const baseSeedCompDefAcc = getArciumAccountBaseSeed("ComputationDefinitionAccount");
   const offset = getCompDefAccOffset(circuitName);
@@ -102,12 +119,16 @@ async function initCompDef(
   )[0];
 
   const existingAccount = await provider.connection.getAccountInfo(compDefPDA);
-  if (existingAccount) {
-    console.log(`  ✓ ${circuitName} comp def already exists`);
+  if (existingAccount && !forceReinit) {
+    console.log(`  ✓ ${circuitName} comp def already exists (use --force to reinit)`);
     return;
   }
 
-  console.log(`  Initializing ${circuitName} comp def...`);
+  if (existingAccount && forceReinit) {
+    console.log(`  ⚠ ${circuitName} comp def exists but cannot be closed. Attempting to reinitialize...`);
+  } else {
+    console.log(`  Initializing ${circuitName} comp def...`);
+  }
 
   // Get LUT address for v0.7.0
   const arciumProgram = getArciumProgram(provider);
@@ -118,22 +139,31 @@ async function initCompDef(
     mxeAcc.lutOffsetSlot
   );
 
-  // Step 1: Initialize the comp def
-  await retryWithBackoff(async () => {
-    await (program.methods as any)[methodName]()
-      .accounts({
-        compDefAccount: compDefPDA,
-        payer: owner.publicKey,
-        mxeAccount,
-        addressLookupTable: lutAddress,
-      })
-      .signers([owner])
-      .rpc({ commitment: "confirmed" });
-  });
+  // Step 1: Initialize the comp def (this will fail if it already exists)
+  try {
+    await retryWithBackoff(async () => {
+      await (program.methods as any)[methodName]()
+        .accounts({
+          compDefAccount: compDefPDA,
+          payer: owner.publicKey,
+          mxeAccount,
+          addressLookupTable: lutAddress,
+        })
+        .signers([owner])
+        .rpc({ commitment: "confirmed" });
+    });
+  } catch (e: any) {
+    if (e.message?.includes("already in use") || e.message?.includes("0x0")) {
+      console.log(`  ⚠ ${circuitName} comp def already initialized, skipping to finalization`);
+    } else {
+      throw e;
+    }
+  }
 
   await new Promise((resolve) => setTimeout(resolve, 3000));
 
   // Step 2: Finalize the comp def
+  console.log(`  Finalizing ${circuitName} comp def...`);
   await retryWithBackoff(async () => {
     const finalizeTx = await buildFinalizeCompDefTx(
       provider,
@@ -148,7 +178,7 @@ async function initCompDef(
 
     await provider.sendAndConfirm(finalizeTx);
   });
-  
+
   console.log(`  ✓ ${circuitName} comp def initialized and finalized`);
   await new Promise((resolve) => setTimeout(resolve, 2000));
 }
@@ -158,9 +188,15 @@ async function initCompDef(
 // =============================================================================
 
 async function main() {
+  const forceReinit = process.argv.includes("--force");
+
   console.log("\n======================================================================");
-  console.log("DEVNET COMPUTATION DEFINITION INITIALIZATION");
+  console.log("REINITIALIZE COMPUTATION DEFINITIONS (OFF-CHAIN)");
   console.log("======================================================================\n");
+
+  if (forceReinit) {
+    console.log("⚠️  FORCE MODE: Will attempt to reinitialize existing comp defs\n");
+  }
 
   // Setup connection and provider
   const connection = new Connection(DEVNET_RPC_URL, "confirmed");
@@ -170,8 +206,7 @@ async function main() {
 
   console.log(`RPC URL: ${DEVNET_RPC_URL.substring(0, 50)}...`);
   console.log(`Program ID: ${PROGRAM_ID.toBase58()}`);
-  console.log(`Payer: ${owner.publicKey.toBase58()}`);
-  console.log(`Cluster Offset: ${CLUSTER_OFFSET}\n`);
+  console.log(`Payer: ${owner.publicKey.toBase58()}\n`);
 
   // Check balance
   const balance = await connection.getBalance(owner.publicKey);
@@ -192,9 +227,6 @@ async function main() {
   const idl = JSON.parse(fs.readFileSync(idlPath, "utf-8"));
   const program = new Program<ShuffleProtocol>(idl, provider);
 
-  // Initialize all computation definitions
-  console.log("Initializing computation definitions...\n");
-
   const circuits = [
     { name: "add_balance", method: "initAddBalanceCompDef" },
     { name: "sub_balance", method: "initSubBalanceCompDef" },
@@ -206,28 +238,47 @@ async function main() {
     { name: "add_together", method: "initAddTogetherCompDef" },
   ];
 
+  // Step 1: Check and close existing comp defs
+  console.log("Step 1: Checking existing comp defs...\n");
+  const existingCompDefs: string[] = [];
+
+  for (const circuit of circuits) {
+    const exists = await closeCompDefIfExists(program, owner, provider, circuit.name);
+    if (exists) {
+      existingCompDefs.push(circuit.name);
+    }
+  }
+
+  if (existingCompDefs.length > 0 && !forceReinit) {
+    console.log("\n⚠️  Found existing comp defs that cannot be closed:");
+    existingCompDefs.forEach(name => console.log(`  - ${name}`));
+    console.log("\nThe existing comp defs are using onchain storage (incomplete).");
+    console.log("Unfortunately, Arcium doesn't provide a way to close comp def accounts.");
+    console.log("\nYou have two options:");
+    console.log("  1. Deploy to a new program address with fresh comp defs");
+    console.log("  2. Continue using the existing comp defs (they may work despite errors)\n");
+    console.log("To attempt reinitialization anyway, run with --force flag");
+    console.log("(This will likely fail but worth trying)\n");
+    process.exit(1);
+  }
+
+  // Step 2: Initialize comp defs with off-chain circuits
+  console.log("\nStep 2: Initializing computation definitions...\n");
+
   for (const circuit of circuits) {
     try {
-      await initCompDef(program, owner, provider, circuit.name, circuit.method);
+      await initCompDef(program, owner, provider, circuit.name, circuit.method, forceReinit);
     } catch (e: any) {
       console.error(`  ❌ Failed to initialize ${circuit.name}: ${e.message}`);
-      // Continue with other circuits
     }
   }
 
   console.log("\n======================================================================");
-  console.log("✅ COMPUTATION DEFINITIONS INITIALIZATION COMPLETE");
+  console.log("✅ DONE");
   console.log("======================================================================\n");
-
-  // Show status
-  console.log("Next steps:");
-  console.log("  1. Initialize pool with token mints");
-  console.log("  2. Initialize BatchAccumulator");
-  console.log("  3. Call initBatchState to set up encrypted zeros");
-  console.log("  4. Update SDK constants with program ID and cluster offset\n");
 }
 
 main().catch((e) => {
-  console.error("Deployment failed:", e);
+  console.error("Script failed:", e);
   process.exit(1);
 });

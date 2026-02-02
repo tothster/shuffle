@@ -29,7 +29,7 @@ PINATA_API_KEY="016d836ee3eb37002836"
 PINATA_SECRET_KEY="71c06d316fe0201cfd677fe179c772d5f12fac33822097f65b50f336fdd5f313"
 
 # Project paths
-PROJECT_DIR="/Users/moura/repo/sol-privacy-mvp"
+PROJECT_DIR="/home/moura/repo/shuffle"
 CONTRACT_DIR="$PROJECT_DIR/contract"
 BUILD_DIR="$CONTRACT_DIR/build"
 

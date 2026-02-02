@@ -31,7 +31,7 @@
     "url": "https://github.com/tothster/shuffle/issues"
   },
   "dependencies": {
-    "@arcium-hq/client": "0.6.3",
+    "@arcium-hq/client": "0.7.0",
     "@coral-xyz/anchor": "^0.32.1",
     "@solana/web3.js": "^1.98.4",
     "@solana/spl-token": "^0.4.14",

@@ -6,16 +6,16 @@ resolution = true
 skip-lint = false
 
 [programs.devnet]
-shuffle_protocol = "CPaXkQZsWgJ47abuwAoCX61cSu5CZHSB4P4ETd3Rc5xU"
+shuffle_protocol = "J5B3CHigkr6Tiz9iRACMNk355uY5wFpVCq6847urV3Et"
 
 [programs.localnet]
-shuffle_protocol = "CPaXkQZsWgJ47abuwAoCX61cSu5CZHSB4P4ETd3Rc5xU"
+shuffle_protocol = "DQ29rUToHVTyp2QxP3C7nt1MuYp6p6PKYNaDpGooPAFq"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "localnet"
+cluster = "devnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
