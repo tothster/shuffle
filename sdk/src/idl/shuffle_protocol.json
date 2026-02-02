@@ -1,0 +1,6333 @@
+{
+  "address": "BzaakuSahkVtEXKqZnD9tSPBoiJCMLa1nzQHUjtY1xRM",
+  "metadata": {
+    "name": "shuffle_protocol",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Privacy-preserving DeFi protocol for private DCA into tokenized stocks on Solana"
+  },
+  "instructions": [
+    {
+      "name": "accumulate_order_callback",
+      "docs": [
+        "Callback handler for accumulate_order computation.",
+        "Receives (has_funds, new_balance, new_batch_state) from MPC.",
+        "If has_funds is false, clears pending_order and aborts.",
+        "Callback handler for accumulate_order computation.",
+        "MPC output is now a 4-tuple: (has_funds, batch_ready, new_balance, new_batch_state)",
+        "- has_funds: revealed bool - if false, clear pending_order and abort",
+        "- batch_ready: revealed bool - if true, emit BatchReadyEvent",
+        "- new_balance: Enc<Shared, UserBalance> - updated user balance",
+        "- new_batch_state: Enc<Mxe, BatchState> - updated batch with order/pair tracking"
+      ],
+      "discriminator": [
+        22,
+        82,
+        244,
+        189,
+        178,
+        56,
+        38,
+        55
+      ],
+      "accounts": [
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        },
+        {
+          "name": "comp_def_account"
+        },
+        {
+          "name": "mxe_account"
+        },
+        {
+          "name": "computation_account"
+        },
+        {
+          "name": "cluster_account"
+        },
+        {
+          "name": "instructions_sysvar",
+          "address": "Sysvar1nstructions1111111111111111111111111"
+        },
+        {
+          "name": "user_account",
+          "writable": true
+        },
+        {
+          "name": "batch_accumulator",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "output",
+          "type": {
+            "defined": {
+              "name": "SignedComputationOutputs",
+              "generics": [
+                {
+                  "kind": "type",
+                  "type": {
+                    "defined": {
+                      "name": "AccumulateOrderOutput"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "add_balance",
+      "docs": [
+        "Queue an encrypted balance update for a deposit.",
+        "This performs the token transfer and queues the MPC computation.",
+        "The actual balance update happens in the callback.",
+        "",
+        "# Arguments",
+        "* `computation_offset` - Unique ID for this computation",
+        "* `encrypted_amount` - The deposit amount encrypted with user's key",
+        "* `pubkey` - User's x25519 public key",
+        "* `nonce` - Encryption nonce",
+        "* `amount` - Plaintext amount for token transfer (revealed for CPI)",
+        "* `asset_id` - Asset identifier (0=USDC, 1=TSLA, 2=SPY, 3=AAPL)"
+      ],
+      "discriminator": [
+        222,
+        94,
+        198,
+        210,
+        48,
+        187,
+        242,
+        30
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "user",
+          "docs": [
+            "The user making the deposit (must sign for token transfer)"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "pool",
+          "docs": [
+            "The pool account (for vault authority)"
+          ],
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "user_account",
+          "docs": [
+            "User's privacy account (will have encrypted balance updated via callback)"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              }
+            ]
+          }
+        },
+        {
+          "name": "user_token_account",
+          "docs": [
+            "User's token account for the asset being deposited (source of funds)",
+            "Caller must provide the correct token account matching the asset_id"
+          ],
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "docs": [
+            "Protocol's vault for the asset being deposited (destination of funds)",
+            "Caller must provide the correct vault matching the asset_id"
+          ],
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "sign_pda_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  65,
+                  114,
+                  99,
+                  105,
+                  117,
+                  109,
+                  83,
+                  105,
+                  103,
+                  110,
+                  101,
+                  114,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "mxe_account"
+        },
+        {
+          "name": "mempool_account",
+          "writable": true
+        },
+        {
+          "name": "executing_pool",
+          "writable": true
+        },
+        {
+          "name": "computation_account",
+          "writable": true
+        },
+        {
+          "name": "comp_def_account"
+        },
+        {
+          "name": "cluster_account",
+          "writable": true
+        },
+        {
+          "name": "pool_account",
+          "writable": true,
+          "address": "G2sRWJvi3xoyh5k2gY49eG9L8YhAEWQPtNb1zb1GXTtC"
+        },
+        {
+          "name": "clock_account",
+          "writable": true,
+          "address": "7EbMUTLo5DjdzbN7s8BXeZwXzEwNQb1hScfRvWg8a6ot"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        }
+      ],
+      "args": [
+        {
+          "name": "computation_offset",
+          "type": "u64"
+        },
+        {
+          "name": "encrypted_amount",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "pubkey",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "nonce",
+          "type": "u128"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "asset_id",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "add_balance_callback",
+      "docs": [
+        "Callback handler for add_balance computation.",
+        "Receives the new encrypted balance from MPC and updates user account."
+      ],
+      "discriminator": [
+        70,
+        238,
+        215,
+        251,
+        156,
+        47,
+        0,
+        33
+      ],
+      "accounts": [
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        },
+        {
+          "name": "comp_def_account"
+        },
+        {
+          "name": "mxe_account"
+        },
+        {
+          "name": "computation_account"
+        },
+        {
+          "name": "cluster_account"
+        },
+        {
+          "name": "instructions_sysvar",
+          "address": "Sysvar1nstructions1111111111111111111111111"
+        },
+        {
+          "name": "user_account",
+          "docs": [
+            "User's privacy account - receives the updated encrypted balance"
+          ],
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "output",
+          "type": {
+            "defined": {
+              "name": "SignedComputationOutputs",
+              "generics": [
+                {
+                  "kind": "type",
+                  "type": {
+                    "defined": {
+                      "name": "AddBalanceOutput"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "add_liquidity",
+      "docs": [
+        "Add liquidity to protocol reserves.",
+        "Only callable by pool authority.",
+        "",
+        "# Arguments",
+        "* `asset_id` - Asset to add (0=USDC, 1=TSLA, 2=SPY, 3=AAPL)",
+        "* `amount` - Amount to transfer to reserves"
+      ],
+      "discriminator": [
+        181,
+        157,
+        89,
+        67,
+        143,
+        182,
+        52,
+        72
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "pool",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority_token_account",
+          "docs": [
+            "Authority's token account (source of funds)"
+          ],
+          "writable": true
+        },
+        {
+          "name": "reserve_vault",
+          "docs": [
+            "Reserve vault for the specified asset (destination)"
+          ],
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "asset_id",
+          "type": "u8"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "add_together",
+      "discriminator": [
+        70,
+        27,
+        73,
+        27,
+        150,
+        56,
+        75,
+        181
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "sign_pda_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  65,
+                  114,
+                  99,
+                  105,
+                  117,
+                  109,
+                  83,
+                  105,
+                  103,
+                  110,
+                  101,
+                  114,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "mxe_account"
+        },
+        {
+          "name": "mempool_account",
+          "writable": true
+        },
+        {
+          "name": "executing_pool",
+          "writable": true
+        },
+        {
+          "name": "computation_account",
+          "writable": true
+        },
+        {
+          "name": "comp_def_account"
+        },
+        {
+          "name": "cluster_account",
+          "writable": true
+        },
+        {
+          "name": "pool_account",
+          "writable": true,
+          "address": "G2sRWJvi3xoyh5k2gY49eG9L8YhAEWQPtNb1zb1GXTtC"
+        },
+        {
+          "name": "clock_account",
+          "writable": true,
+          "address": "7EbMUTLo5DjdzbN7s8BXeZwXzEwNQb1hScfRvWg8a6ot"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        }
+      ],
+      "args": [
+        {
+          "name": "computation_offset",
+          "type": "u64"
+        },
+        {
+          "name": "ciphertext_0",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "ciphertext_1",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "pubkey",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "nonce",
+          "type": "u128"
+        }
+      ]
+    },
+    {
+      "name": "add_together_callback",
+      "discriminator": [
+        42,
+        196,
+        213,
+        69,
+        34,
+        229,
+        162,
+        63
+      ],
+      "accounts": [
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        },
+        {
+          "name": "comp_def_account"
+        },
+        {
+          "name": "mxe_account"
+        },
+        {
+          "name": "computation_account"
+        },
+        {
+          "name": "cluster_account"
+        },
+        {
+          "name": "instructions_sysvar",
+          "address": "Sysvar1nstructions1111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "output",
+          "type": {
+            "defined": {
+              "name": "SignedComputationOutputs",
+              "generics": [
+                {
+                  "kind": "type",
+                  "type": {
+                    "defined": {
+                      "name": "AddTogetherOutput"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "calculate_payout_callback",
+      "docs": [
+        "Callback handler for calculate_payout computation.",
+        "Updates user balance with payout and clears pending_order."
+      ],
+      "discriminator": [
+        124,
+        117,
+        1,
+        169,
+        253,
+        255,
+        240,
+        156
+      ],
+      "accounts": [
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        },
+        {
+          "name": "comp_def_account"
+        },
+        {
+          "name": "mxe_account"
+        },
+        {
+          "name": "computation_account"
+        },
+        {
+          "name": "cluster_account"
+        },
+        {
+          "name": "instructions_sysvar",
+          "address": "Sysvar1nstructions1111111111111111111111111"
+        },
+        {
+          "name": "user_account",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "output",
+          "type": {
+            "defined": {
+              "name": "SignedComputationOutputs",
+              "generics": [
+                {
+                  "kind": "type",
+                  "type": {
+                    "defined": {
+                      "name": "CalculatePayoutOutput"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "check_privacy_account_exists",
+      "docs": [
+        "Check if a wallet has a privacy account.",
+        "This is a view function for clients to check before attempting transfers.",
+        "",
+        "# Returns",
+        "* `true` if the account exists",
+        "* `false` if the account doesn't exist"
+      ],
+      "discriminator": [
+        38,
+        86,
+        246,
+        112,
+        205,
+        171,
+        98,
+        210
+      ],
+      "accounts": [
+        {
+          "name": "user_account",
+          "docs": [
+            "The privacy account to check",
+            "If this doesn't exist, Anchor will return AccountNotInitialized error"
+          ]
+        }
+      ],
+      "args": [],
+      "returns": "bool"
+    },
+    {
+      "name": "create_user_account",
+      "docs": [
+        "Create a new privacy account for the user.",
+        "Each wallet can have only one privacy account.",
+        "",
+        "# Arguments",
+        "* `user_pubkey` - User's x25519 public key for Arcium encryption",
+        "* `initial_balances` - Encrypted balances for all 4 assets [USDC, TSLA, SPY, AAPL]",
+        "* `initial_nonce` - Nonce used to encrypt the initial balances"
+      ],
+      "discriminator": [
+        146,
+        68,
+        100,
+        69,
+        63,
+        46,
+        182,
+        199
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "docs": [
+            "The wallet paying for account creation (rent).",
+            "Usually the same as owner, but can be different (sponsored)."
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "owner",
+          "docs": [
+            "The wallet that will own this privacy account.",
+            "Must sign to prove ownership."
+          ],
+          "signer": true
+        },
+        {
+          "name": "user_account",
+          "docs": [
+            "The user's privacy account - PDA derived from their wallet address.",
+            "Seeds: [\"user\", owner.key().as_ref()]",
+            "This ensures only ONE privacy account per wallet."
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "owner"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "docs": [
+            "Required for creating accounts"
+          ],
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "user_pubkey",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "initial_balances",
+          "type": {
+            "array": [
+              {
+                "array": [
+                  "u8",
+                  32
+                ]
+              },
+              4
+            ]
+          }
+        },
+        {
+          "name": "initial_nonce",
+          "type": "u128"
+        }
+      ]
+    },
+    {
+      "name": "execute_batch",
+      "docs": [
+        "Execute the current batch.",
+        "Reveals aggregate totals via MPC, then performs netting and swaps in callback.",
+        "",
+        "# Arguments",
+        "* `computation_offset` - Unique ID for MPC computation"
+      ],
+      "discriminator": [
+        112,
+        159,
+        211,
+        51,
+        238,
+        70,
+        212,
+        60
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "caller",
+          "docs": [
+            "Caller triggering batch execution (can be anyone now - permissionless)",
+            "NOTE: In production, you may want to add incentives for the executor"
+          ],
+          "signer": true
+        },
+        {
+          "name": "pool",
+          "docs": [
+            "Pool account for operator verification"
+          ],
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "batch_accumulator",
+          "docs": [
+            "Batch accumulator to read state from"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  97,
+                  116,
+                  99,
+                  104,
+                  95,
+                  97,
+                  99,
+                  99,
+                  117,
+                  109,
+                  117,
+                  108,
+                  97,
+                  116,
+                  111,
+                  114
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "batch_log",
+          "docs": [
+            "BatchLog PDA to create (will be initialized in callback)"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  97,
+                  116,
+                  99,
+                  104,
+                  95,
+                  108,
+                  111,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "batch_accumulator.batch_id",
+                "account": "BatchAccumulator"
+              }
+            ]
+          }
+        },
+        {
+          "name": "sign_pda_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  65,
+                  114,
+                  99,
+                  105,
+                  117,
+                  109,
+                  83,
+                  105,
+                  103,
+                  110,
+                  101,
+                  114,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "mxe_account"
+        },
+        {
+          "name": "mempool_account",
+          "writable": true
+        },
+        {
+          "name": "executing_pool",
+          "writable": true
+        },
+        {
+          "name": "computation_account",
+          "writable": true
+        },
+        {
+          "name": "comp_def_account"
+        },
+        {
+          "name": "cluster_account",
+          "writable": true
+        },
+        {
+          "name": "pool_account",
+          "writable": true,
+          "address": "G2sRWJvi3xoyh5k2gY49eG9L8YhAEWQPtNb1zb1GXTtC"
+        },
+        {
+          "name": "clock_account",
+          "writable": true,
+          "address": "7EbMUTLo5DjdzbN7s8BXeZwXzEwNQb1hScfRvWg8a6ot"
+        },
+        {
+          "name": "vault_usdc",
+          "docs": [
+            "USDC vault (user deposits)"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  100,
+                  99
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault_tsla",
+          "docs": [
+            "TSLA vault"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  115,
+                  108,
+                  97
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault_spy",
+          "docs": [
+            "SPY vault"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  112,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault_aapl",
+          "docs": [
+            "AAPL vault"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  97,
+                  112,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "reserve_usdc",
+          "docs": [
+            "USDC reserve (protocol liquidity)"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  115,
+                  101,
+                  114,
+                  118,
+                  101
+                ]
+              },
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  100,
+                  99
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "reserve_tsla",
+          "docs": [
+            "TSLA reserve"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  115,
+                  101,
+                  114,
+                  118,
+                  101
+                ]
+              },
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  115,
+                  108,
+                  97
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "reserve_spy",
+          "docs": [
+            "SPY reserve"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  115,
+                  101,
+                  114,
+                  118,
+                  101
+                ]
+              },
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  112,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "reserve_aapl",
+          "docs": [
+            "AAPL reserve"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  115,
+                  101,
+                  114,
+                  118,
+                  101
+                ]
+              },
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  97,
+                  112,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_program",
+          "docs": [
+            "Token program for transfers"
+          ],
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        }
+      ],
+      "args": [
+        {
+          "name": "computation_offset",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "execute_swaps",
+      "docs": [
+        "Execute vault↔reserve swaps based on BatchLog netting results.",
+        "Called by backend after MPC callback completes.",
+        "",
+        "# Arguments",
+        "* `batch_id` - The batch ID to execute swaps for"
+      ],
+      "discriminator": [
+        131,
+        242,
+        180,
+        205,
+        235,
+        179,
+        105,
+        117
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "operator",
+          "docs": [
+            "Operator authorized to trigger swaps (same as batch execution)"
+          ],
+          "signer": true
+        },
+        {
+          "name": "pool",
+          "docs": [
+            "Pool account for operator verification and PDA authority"
+          ],
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "batch_log",
+          "docs": [
+            "BatchLog containing netting results (must be for matching batch_id)"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  97,
+                  116,
+                  99,
+                  104,
+                  95,
+                  108,
+                  111,
+                  103
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "batch_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault_usdc",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  100,
+                  99
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault_tsla",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  115,
+                  108,
+                  97
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault_spy",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  112,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault_aapl",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  97,
+                  112,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "reserve_usdc",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  115,
+                  101,
+                  114,
+                  118,
+                  101
+                ]
+              },
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  100,
+                  99
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "reserve_tsla",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  115,
+                  101,
+                  114,
+                  118,
+                  101
+                ]
+              },
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  115,
+                  108,
+                  97
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "reserve_spy",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  115,
+                  101,
+                  114,
+                  118,
+                  101
+                ]
+              },
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  112,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "reserve_aapl",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  115,
+                  101,
+                  114,
+                  118,
+                  101
+                ]
+              },
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  97,
+                  112,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_program",
+          "docs": [
+            "Token program for transfers"
+          ],
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "batch_id",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "faucet",
+      "docs": [
+        "Claim USDC from the devnet faucet.",
+        "Each user can claim up to 1000 USDC total.",
+        "",
+        "# Arguments",
+        "* `amount` - Amount of USDC to claim (in base units, 6 decimals)"
+      ],
+      "discriminator": [
+        0,
+        98,
+        59,
+        30,
+        144,
+        142,
+        113,
+        12
+      ],
+      "accounts": [
+        {
+          "name": "user",
+          "docs": [
+            "User claiming from faucet (must sign)"
+          ],
+          "signer": true
+        },
+        {
+          "name": "user_account",
+          "docs": [
+            "User's privacy account (tracks total claimed)"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              }
+            ]
+          }
+        },
+        {
+          "name": "user_usdc_account",
+          "docs": [
+            "User's USDC token account (receives tokens)"
+          ],
+          "writable": true
+        },
+        {
+          "name": "pool",
+          "docs": [
+            "Pool PDA (authority for vaults)"
+          ],
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "faucet_vault",
+          "docs": [
+            "Faucet USDC vault (source of tokens)"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  97,
+                  117,
+                  99,
+                  101,
+                  116,
+                  95,
+                  117,
+                  115,
+                  100,
+                  99
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "init_accumulate_order_comp_def",
+      "docs": [
+        "Initialize the accumulate_order computation definition (Phase 8).",
+        "This must be called once before orders can be placed."
+      ],
+      "discriminator": [
+        134,
+        108,
+        85,
+        22,
+        195,
+        254,
+        97,
+        85
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mxe_account",
+          "writable": true
+        },
+        {
+          "name": "comp_def_account",
+          "writable": true
+        },
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "init_add_balance_comp_def",
+      "docs": [
+        "Initialize the add_balance computation definition.",
+        "This must be called once before any encrypted deposits can be processed."
+      ],
+      "discriminator": [
+        42,
+        16,
+        185,
+        133,
+        217,
+        254,
+        76,
+        97
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mxe_account",
+          "writable": true
+        },
+        {
+          "name": "comp_def_account",
+          "docs": [
+            "Can't check it here as it's not initialized yet."
+          ],
+          "writable": true
+        },
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "init_add_together_comp_def",
+      "discriminator": [
+        130,
+        156,
+        172,
+        33,
+        183,
+        56,
+        36,
+        145
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mxe_account",
+          "writable": true
+        },
+        {
+          "name": "comp_def_account",
+          "docs": [
+            "Can't check it here as it's not initialized yet."
+          ],
+          "writable": true
+        },
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "init_batch_accumulator",
+      "docs": [
+        "Initialize the BatchAccumulator singleton account.",
+        "This must be called once after pool initialization before orders can be placed.",
+        "The BatchAccumulator tracks all orders across the 6 trading pairs.",
+        "It auto-triggers batch execution when order_count >= 8 AND active_pairs >= 2."
+      ],
+      "discriminator": [
+        62,
+        97,
+        110,
+        47,
+        107,
+        172,
+        139,
+        154
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "docs": [
+            "The payer for account creation."
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "batch_accumulator",
+          "docs": [
+            "The BatchAccumulator PDA to create.",
+            "Seeds: [\"batch_accumulator\"]"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  97,
+                  116,
+                  99,
+                  104,
+                  95,
+                  97,
+                  99,
+                  99,
+                  117,
+                  109,
+                  117,
+                  108,
+                  97,
+                  116,
+                  111,
+                  114
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "init_batch_state",
+      "docs": [
+        "Queue MPC to generate encrypted zeros for the batch accumulator.",
+        "This must be called once after batch accumulator creation and after each batch reset."
+      ],
+      "discriminator": [
+        109,
+        231,
+        13,
+        60,
+        133,
+        139,
+        136,
+        72
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "batch_accumulator",
+          "docs": [
+            "Batch accumulator to initialize"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  97,
+                  116,
+                  99,
+                  104,
+                  95,
+                  97,
+                  99,
+                  99,
+                  117,
+                  109,
+                  117,
+                  108,
+                  97,
+                  116,
+                  111,
+                  114
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "sign_pda_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  65,
+                  114,
+                  99,
+                  105,
+                  117,
+                  109,
+                  83,
+                  105,
+                  103,
+                  110,
+                  101,
+                  114,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "mxe_account"
+        },
+        {
+          "name": "mempool_account",
+          "writable": true
+        },
+        {
+          "name": "executing_pool",
+          "writable": true
+        },
+        {
+          "name": "computation_account",
+          "writable": true
+        },
+        {
+          "name": "comp_def_account"
+        },
+        {
+          "name": "cluster_account",
+          "writable": true
+        },
+        {
+          "name": "pool_account",
+          "writable": true,
+          "address": "G2sRWJvi3xoyh5k2gY49eG9L8YhAEWQPtNb1zb1GXTtC"
+        },
+        {
+          "name": "clock_account",
+          "writable": true,
+          "address": "7EbMUTLo5DjdzbN7s8BXeZwXzEwNQb1hScfRvWg8a6ot"
+        },
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "computation_offset",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "init_batch_state_callback",
+      "docs": [
+        "Callback: Receive encrypted zeros from MPC and store in batch accumulator.",
+        "BatchState has 19 encrypted u64 values:",
+        "- pairs[6]: 12 u64 values (pair[i].total_a_in, pair[i].total_b_in) - indices 0-11",
+        "- order_count: 1 u64 value - index 12",
+        "- active_pairs[6]: 6 bool values (as u64s in MPC) - indices 13-18"
+      ],
+      "discriminator": [
+        78,
+        100,
+        135,
+        184,
+        209,
+        7,
+        206,
+        214
+      ],
+      "accounts": [
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        },
+        {
+          "name": "comp_def_account"
+        },
+        {
+          "name": "mxe_account"
+        },
+        {
+          "name": "computation_account"
+        },
+        {
+          "name": "cluster_account"
+        },
+        {
+          "name": "instructions_sysvar",
+          "address": "Sysvar1nstructions1111111111111111111111111"
+        },
+        {
+          "name": "batch_accumulator",
+          "docs": [
+            "Batch accumulator to update with encrypted zeros"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  97,
+                  116,
+                  99,
+                  104,
+                  95,
+                  97,
+                  99,
+                  99,
+                  117,
+                  109,
+                  117,
+                  108,
+                  97,
+                  116,
+                  111,
+                  114
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "output",
+          "type": {
+            "defined": {
+              "name": "SignedComputationOutputs",
+              "generics": [
+                {
+                  "kind": "type",
+                  "type": {
+                    "defined": {
+                      "name": "InitBatchStateOutput"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "init_calculate_payout_comp_def",
+      "docs": [
+        "Initialize the calculate_payout computation definition (Phase 10).",
+        "This must be called once before settlements can be processed."
+      ],
+      "discriminator": [
+        60,
+        71,
+        17,
+        183,
+        94,
+        26,
+        98,
+        216
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mxe_account",
+          "writable": true
+        },
+        {
+          "name": "comp_def_account",
+          "writable": true
+        },
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "init_init_batch_state_comp_def",
+      "docs": [
+        "Initialize the init_batch_state computation definition (Phase 8).",
+        "This must be called once for batch initialization."
+      ],
+      "discriminator": [
+        212,
+        24,
+        105,
+        229,
+        172,
+        136,
+        14,
+        210
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mxe_account",
+          "writable": true
+        },
+        {
+          "name": "comp_def_account",
+          "writable": true
+        },
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "init_reveal_batch_comp_def",
+      "docs": [
+        "Initialize the reveal_batch computation definition (Phase 9).",
+        "This must be called once before batch execution."
+      ],
+      "discriminator": [
+        31,
+        228,
+        123,
+        163,
+        4,
+        28,
+        147,
+        89
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mxe_account",
+          "writable": true
+        },
+        {
+          "name": "comp_def_account",
+          "writable": true
+        },
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "init_sub_balance_comp_def",
+      "docs": [
+        "Initialize the sub_balance computation definition.",
+        "This must be called once before any encrypted withdrawals can be processed."
+      ],
+      "discriminator": [
+        56,
+        27,
+        46,
+        71,
+        118,
+        37,
+        246,
+        245
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mxe_account",
+          "writable": true
+        },
+        {
+          "name": "comp_def_account",
+          "docs": [
+            "Can't check it here as it's not initialized yet."
+          ],
+          "writable": true
+        },
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "init_transfer_comp_def",
+      "docs": [
+        "Initialize the transfer computation definition.",
+        "This must be called once before any P2P transfers can be processed."
+      ],
+      "discriminator": [
+        70,
+        189,
+        147,
+        177,
+        58,
+        107,
+        79,
+        13
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mxe_account",
+          "writable": true
+        },
+        {
+          "name": "comp_def_account",
+          "writable": true
+        },
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize",
+      "docs": [
+        "Initialize the Shuffle Protocol protocol.",
+        "Creates the Pool account and all token vaults.",
+        "Should only be called once when deploying the protocol.",
+        "",
+        "# Arguments",
+        "* `execution_fee_bps` - Fee on swaps in basis points (e.g., 50 = 0.5%)",
+        "* `execution_trigger_count` - Number of orders to trigger batch execution"
+      ],
+      "discriminator": [
+        175,
+        175,
+        109,
+        31,
+        13,
+        152,
+        155,
+        237
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "docs": [
+            "The wallet paying for account creation (rent).",
+            "Must sign the transaction."
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "authority",
+          "docs": [
+            "Admin authority for the protocol.",
+            "Can update fees, pause protocol, etc."
+          ]
+        },
+        {
+          "name": "operator",
+          "docs": [
+            "Operator wallet for batch execution."
+          ]
+        },
+        {
+          "name": "treasury",
+          "docs": [
+            "Treasury wallet for collecting fees."
+          ]
+        },
+        {
+          "name": "pool",
+          "docs": [
+            "The main Pool account - central state for the protocol.",
+            "PDA derived from seeds: [\"pool\"]",
+            "Space calculation defined in Pool::SIZE",
+            "Note: Wrapped in Box to reduce stack usage (many accounts in this instruction)"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "usdc_mint",
+          "docs": [
+            "USDC token mint - any valid mint can be passed",
+            "The address is stored in Pool during initialization",
+            "Note: Wrapped in Box to reduce stack usage"
+          ]
+        },
+        {
+          "name": "tsla_mint",
+          "docs": [
+            "TSLA token mint"
+          ]
+        },
+        {
+          "name": "spy_mint",
+          "docs": [
+            "SPY token mint"
+          ]
+        },
+        {
+          "name": "aapl_mint",
+          "docs": [
+            "AAPL token mint"
+          ]
+        },
+        {
+          "name": "vault_usdc",
+          "docs": [
+            "USDC vault - holds all deposited USDC",
+            "PDA seeds: [\"vault\", \"usdc\"]"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  100,
+                  99
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault_tsla",
+          "docs": [
+            "TSLA vault - holds TSLA tokens",
+            "PDA seeds: [\"vault\", \"tsla\"]"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  115,
+                  108,
+                  97
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault_spy",
+          "docs": [
+            "SPY vault - holds SPY tokens",
+            "PDA seeds: [\"vault\", \"spy\"]"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  112,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault_aapl",
+          "docs": [
+            "AAPL vault - holds AAPL tokens",
+            "PDA seeds: [\"vault\", \"aapl\"]"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  97,
+                  112,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "reserve_usdc",
+          "docs": [
+            "USDC reserve - protocol liquidity for swaps",
+            "PDA seeds: [\"reserve\", \"usdc\"]"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  115,
+                  101,
+                  114,
+                  118,
+                  101
+                ]
+              },
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  100,
+                  99
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "reserve_tsla",
+          "docs": [
+            "TSLA reserve - protocol liquidity",
+            "PDA seeds: [\"reserve\", \"tsla\"]"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  115,
+                  101,
+                  114,
+                  118,
+                  101
+                ]
+              },
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  115,
+                  108,
+                  97
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "reserve_spy",
+          "docs": [
+            "SPY reserve - protocol liquidity",
+            "PDA seeds: [\"reserve\", \"spy\"]"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  115,
+                  101,
+                  114,
+                  118,
+                  101
+                ]
+              },
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  112,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "reserve_aapl",
+          "docs": [
+            "AAPL reserve - protocol liquidity",
+            "PDA seeds: [\"reserve\", \"aapl\"]"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  115,
+                  101,
+                  114,
+                  118,
+                  101
+                ]
+              },
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  97,
+                  112,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "faucet_vault",
+          "docs": [
+            "USDC faucet vault - tokens users can claim for testing",
+            "PDA seeds: [\"faucet_usdc\"]"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  102,
+                  97,
+                  117,
+                  99,
+                  101,
+                  116,
+                  95,
+                  117,
+                  115,
+                  100,
+                  99
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "docs": [
+            "Required for creating accounts"
+          ],
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "token_program",
+          "docs": [
+            "Required for creating token accounts"
+          ],
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "execution_fee_bps",
+          "type": "u16"
+        },
+        {
+          "name": "execution_trigger_count",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "internal_transfer",
+      "docs": [
+        "Internal transfer between two privacy accounts.",
+        "Atomically deducts from sender's and adds to recipient's encrypted balance.",
+        "",
+        "Both balances are updated in a single MPC computation using the `transfer` circuit.",
+        "",
+        "# Arguments",
+        "* `computation_offset` - Unique ID for MPC computation",
+        "* `encrypted_amount` - Amount encrypted with sender's key",
+        "* `pubkey` - Sender's x25519 public key",
+        "* `nonce` - Encryption nonce"
+      ],
+      "discriminator": [
+        56,
+        217,
+        60,
+        137,
+        252,
+        221,
+        185,
+        114
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "sender",
+          "docs": [
+            "Sender must sign the transaction"
+          ],
+          "signer": true
+        },
+        {
+          "name": "sender_account",
+          "docs": [
+            "Sender's privacy account (source of funds)"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "sender"
+              }
+            ]
+          }
+        },
+        {
+          "name": "recipient_account",
+          "docs": [
+            "Recipient's privacy account (destination of funds)",
+            "Must exist - if not initialized, Anchor will fail with AccountNotInitialized"
+          ],
+          "writable": true
+        },
+        {
+          "name": "sign_pda_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  65,
+                  114,
+                  99,
+                  105,
+                  117,
+                  109,
+                  83,
+                  105,
+                  103,
+                  110,
+                  101,
+                  114,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "mxe_account"
+        },
+        {
+          "name": "mempool_account",
+          "writable": true
+        },
+        {
+          "name": "executing_pool",
+          "writable": true
+        },
+        {
+          "name": "computation_account",
+          "writable": true
+        },
+        {
+          "name": "cluster_account",
+          "writable": true
+        },
+        {
+          "name": "comp_def_account"
+        },
+        {
+          "name": "pool_account",
+          "writable": true,
+          "address": "G2sRWJvi3xoyh5k2gY49eG9L8YhAEWQPtNb1zb1GXTtC"
+        },
+        {
+          "name": "clock_account",
+          "writable": true,
+          "address": "7EbMUTLo5DjdzbN7s8BXeZwXzEwNQb1hScfRvWg8a6ot"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        }
+      ],
+      "args": [
+        {
+          "name": "computation_offset",
+          "type": "u64"
+        },
+        {
+          "name": "encrypted_amount",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "pubkey",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "nonce",
+          "type": "u128"
+        }
+      ]
+    },
+    {
+      "name": "place_order",
+      "docs": [
+        "Place an encrypted order in the current batch.",
+        "Order details (pair_id, direction, amount) are encrypted on-chain.",
+        "Only batch aggregates are revealed during execution.",
+        "",
+        "# Arguments",
+        "* `computation_offset` - Unique ID for MPC computation",
+        "* `encrypted_pair_id` - Trading pair (0-5) encrypted with user's key",
+        "* `encrypted_direction` - Order direction (0=A_to_B, 1=B_to_A) encrypted",
+        "* `encrypted_amount` - Order amount encrypted",
+        "* `pubkey` - User's x25519 public key",
+        "* `nonce` - Encryption nonce",
+        "* `source_asset_id` - Plaintext hint for which asset is sold"
+      ],
+      "discriminator": [
+        51,
+        194,
+        155,
+        175,
+        109,
+        130,
+        96,
+        106
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "user",
+          "docs": [
+            "User placing the order"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "user_account",
+          "docs": [
+            "User's privacy account"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              }
+            ]
+          }
+        },
+        {
+          "name": "batch_accumulator",
+          "docs": [
+            "Batch accumulator singleton"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  97,
+                  116,
+                  99,
+                  104,
+                  95,
+                  97,
+                  99,
+                  99,
+                  117,
+                  109,
+                  117,
+                  108,
+                  97,
+                  116,
+                  111,
+                  114
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "sign_pda_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  65,
+                  114,
+                  99,
+                  105,
+                  117,
+                  109,
+                  83,
+                  105,
+                  103,
+                  110,
+                  101,
+                  114,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "mxe_account"
+        },
+        {
+          "name": "mempool_account",
+          "writable": true
+        },
+        {
+          "name": "executing_pool",
+          "writable": true
+        },
+        {
+          "name": "computation_account",
+          "writable": true
+        },
+        {
+          "name": "comp_def_account"
+        },
+        {
+          "name": "cluster_account",
+          "writable": true
+        },
+        {
+          "name": "pool_account",
+          "writable": true,
+          "address": "G2sRWJvi3xoyh5k2gY49eG9L8YhAEWQPtNb1zb1GXTtC"
+        },
+        {
+          "name": "clock_account",
+          "writable": true,
+          "address": "7EbMUTLo5DjdzbN7s8BXeZwXzEwNQb1hScfRvWg8a6ot"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        }
+      ],
+      "args": [
+        {
+          "name": "computation_offset",
+          "type": "u64"
+        },
+        {
+          "name": "encrypted_pair_id",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "encrypted_direction",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "encrypted_amount",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "pubkey",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "nonce",
+          "type": "u128"
+        },
+        {
+          "name": "source_asset_id",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "remove_liquidity",
+      "docs": [
+        "Remove liquidity from protocol reserves.",
+        "Only callable by pool authority.",
+        "",
+        "# Arguments",
+        "* `asset_id` - Asset to remove (0=USDC, 1=TSLA, 2=SPY, 3=AAPL)",
+        "* `amount` - Amount to transfer from reserves"
+      ],
+      "discriminator": [
+        80,
+        85,
+        209,
+        72,
+        24,
+        206,
+        177,
+        108
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "pool",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority_token_account",
+          "docs": [
+            "Authority's token account (destination)"
+          ],
+          "writable": true
+        },
+        {
+          "name": "reserve_vault",
+          "docs": [
+            "Reserve vault for the specified asset (source)"
+          ],
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "asset_id",
+          "type": "u8"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "reveal_batch_callback",
+      "docs": [
+        "Callback handler for reveal_batch computation.",
+        "Receives plaintext totals and performs netting + swaps."
+      ],
+      "discriminator": [
+        105,
+        126,
+        211,
+        216,
+        19,
+        162,
+        1,
+        218
+      ],
+      "accounts": [
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        },
+        {
+          "name": "comp_def_account"
+        },
+        {
+          "name": "mxe_account"
+        },
+        {
+          "name": "computation_account"
+        },
+        {
+          "name": "cluster_account"
+        },
+        {
+          "name": "instructions_sysvar",
+          "address": "Sysvar1nstructions1111111111111111111111111"
+        },
+        {
+          "name": "batch_accumulator",
+          "writable": true
+        },
+        {
+          "name": "batch_log",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "output",
+          "type": {
+            "defined": {
+              "name": "SignedComputationOutputs",
+              "generics": [
+                {
+                  "kind": "type",
+                  "type": {
+                    "defined": {
+                      "name": "RevealBatchOutput"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "settle_order",
+      "docs": [
+        "Settle a pending order.",
+        "Calculates pro-rata payout based on batch results and user's order size.",
+        "",
+        "# Arguments",
+        "* `computation_offset` - Unique ID for MPC computation",
+        "* `pubkey` - User's x25519 public key",
+        "* `nonce` - Encryption nonce",
+        "* `pair_id` - Trading pair (0-5)",
+        "* `direction` - Order direction (0=A_to_B, 1=B_to_A)"
+      ],
+      "discriminator": [
+        80,
+        74,
+        204,
+        34,
+        12,
+        183,
+        66,
+        66
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "user",
+          "docs": [
+            "User settling the order"
+          ],
+          "signer": true
+        },
+        {
+          "name": "user_account",
+          "docs": [
+            "User's privacy account"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              }
+            ]
+          }
+        },
+        {
+          "name": "batch_log",
+          "docs": [
+            "BatchLog for the batch being settled"
+          ],
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  97,
+                  116,
+                  99,
+                  104,
+                  95,
+                  108,
+                  111,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "user_account.pending_order",
+                "account": "UserProfile"
+              }
+            ]
+          }
+        },
+        {
+          "name": "sign_pda_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  65,
+                  114,
+                  99,
+                  105,
+                  117,
+                  109,
+                  83,
+                  105,
+                  103,
+                  110,
+                  101,
+                  114,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "mxe_account"
+        },
+        {
+          "name": "mempool_account",
+          "writable": true
+        },
+        {
+          "name": "executing_pool",
+          "writable": true
+        },
+        {
+          "name": "computation_account",
+          "writable": true
+        },
+        {
+          "name": "comp_def_account"
+        },
+        {
+          "name": "cluster_account",
+          "writable": true
+        },
+        {
+          "name": "pool_account",
+          "writable": true,
+          "address": "G2sRWJvi3xoyh5k2gY49eG9L8YhAEWQPtNb1zb1GXTtC"
+        },
+        {
+          "name": "clock_account",
+          "writable": true,
+          "address": "7EbMUTLo5DjdzbN7s8BXeZwXzEwNQb1hScfRvWg8a6ot"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        }
+      ],
+      "args": [
+        {
+          "name": "computation_offset",
+          "type": "u64"
+        },
+        {
+          "name": "pubkey",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "nonce",
+          "type": "u128"
+        },
+        {
+          "name": "pair_id",
+          "type": "u8"
+        },
+        {
+          "name": "direction",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "sub_balance",
+      "docs": [
+        "Queue an encrypted balance update for a withdrawal.",
+        "This performs the token transfer and queues the MPC computation.",
+        "The encrypted balance update happens in the callback.",
+        "",
+        "# Arguments",
+        "* `computation_offset` - Unique ID for this computation",
+        "* `encrypted_amount` - The withdrawal amount encrypted with user's key",
+        "* `pubkey` - User's x25519 public key",
+        "* `nonce` - Encryption nonce",
+        "* `amount` - Plaintext amount for token transfer (deferred to callback)",
+        "* `asset_id` - Asset identifier (0=USDC, 1=TSLA, 2=SPY, 3=AAPL)"
+      ],
+      "discriminator": [
+        220,
+        86,
+        163,
+        233,
+        168,
+        171,
+        113,
+        215
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "user",
+          "docs": [
+            "The user making the withdrawal (must sign for authorization)"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "pool",
+          "docs": [
+            "The pool account (for vault authority in callback)"
+          ],
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "user_account",
+          "docs": [
+            "User's privacy account (will have encrypted balance updated via callback)"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              }
+            ]
+          }
+        },
+        {
+          "name": "recipient_token_account",
+          "docs": [
+            "Recipient's token account for the asset being withdrawn (destination of funds)",
+            "Can be the user's own account OR an external recipient's account",
+            "Caller must provide the correct token account matching the asset_id"
+          ],
+          "writable": true
+        },
+        {
+          "name": "vault",
+          "docs": [
+            "Protocol's vault for the asset being withdrawn (source of funds)",
+            "Caller must provide the correct vault matching the asset_id"
+          ],
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "sign_pda_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  65,
+                  114,
+                  99,
+                  105,
+                  117,
+                  109,
+                  83,
+                  105,
+                  103,
+                  110,
+                  101,
+                  114,
+                  65,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "mxe_account"
+        },
+        {
+          "name": "mempool_account",
+          "writable": true
+        },
+        {
+          "name": "executing_pool",
+          "writable": true
+        },
+        {
+          "name": "computation_account",
+          "writable": true
+        },
+        {
+          "name": "comp_def_account"
+        },
+        {
+          "name": "cluster_account",
+          "writable": true
+        },
+        {
+          "name": "pool_account",
+          "writable": true,
+          "address": "G2sRWJvi3xoyh5k2gY49eG9L8YhAEWQPtNb1zb1GXTtC"
+        },
+        {
+          "name": "clock_account",
+          "writable": true,
+          "address": "7EbMUTLo5DjdzbN7s8BXeZwXzEwNQb1hScfRvWg8a6ot"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        }
+      ],
+      "args": [
+        {
+          "name": "computation_offset",
+          "type": "u64"
+        },
+        {
+          "name": "encrypted_amount",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "pubkey",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "nonce",
+          "type": "u128"
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "asset_id",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "sub_balance_callback",
+      "docs": [
+        "Callback handler for sub_balance computation.",
+        "Receives (has_funds, new_balance) from MPC.",
+        "If has_funds is false, aborts the transaction.",
+        "If has_funds is true, performs the token transfer and updates balance."
+      ],
+      "discriminator": [
+        132,
+        81,
+        216,
+        184,
+        253,
+        230,
+        194,
+        214
+      ],
+      "accounts": [
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        },
+        {
+          "name": "comp_def_account"
+        },
+        {
+          "name": "mxe_account"
+        },
+        {
+          "name": "computation_account"
+        },
+        {
+          "name": "cluster_account"
+        },
+        {
+          "name": "instructions_sysvar",
+          "address": "Sysvar1nstructions1111111111111111111111111"
+        },
+        {
+          "name": "user_account",
+          "docs": [
+            "User's privacy account - receives the updated encrypted balance"
+          ],
+          "writable": true
+        },
+        {
+          "name": "pool",
+          "docs": [
+            "Pool PDA (authority for vault) - passed via CallbackAccount"
+          ]
+        },
+        {
+          "name": "vault",
+          "docs": [
+            "Vault token account - source of tokens for withdrawal"
+          ],
+          "writable": true
+        },
+        {
+          "name": "recipient_token_account",
+          "docs": [
+            "Recipient token account - destination for withdrawn tokens"
+          ],
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "docs": [
+            "Token program for transfer CPI"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "output",
+          "type": {
+            "defined": {
+              "name": "SignedComputationOutputs",
+              "generics": [
+                {
+                  "kind": "type",
+                  "type": {
+                    "defined": {
+                      "name": "SubBalanceOutput"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "test_swap",
+      "docs": [
+        "Test CPI swap through mock_jupiter.",
+        "The Pool PDA signs the CPI as the \"user_authority\" since it owns the vaults.",
+        "This proves cross-program invocation works before building full batch execution.",
+        "",
+        "# Arguments",
+        "* `amount_in` - Amount of source tokens to swap",
+        "* `min_amount_out` - Minimum acceptable output (slippage protection)"
+      ],
+      "discriminator": [
+        64,
+        23,
+        177,
+        99,
+        61,
+        18,
+        70,
+        242
+      ],
+      "accounts": [
+        {
+          "name": "operator",
+          "docs": [
+            "Operator triggers swaps (authorized backend service)"
+          ],
+          "signer": true
+        },
+        {
+          "name": "pool",
+          "docs": [
+            "Pool PDA - acts as signer for the CPI and owns the shuffle_protocol vaults.",
+            "Must be mut because mock_jupiter's Swap marks user_authority as mut,",
+            "and Solana requires writable privilege to be present in the outer instruction."
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "source_mint",
+          "docs": [
+            "Source token mint (e.g., USDC)"
+          ]
+        },
+        {
+          "name": "destination_mint",
+          "docs": [
+            "Destination token mint (e.g., TSLA)"
+          ]
+        },
+        {
+          "name": "pool_source_vault",
+          "docs": [
+            "Shuffle Protocol vault for source asset (Pool PDA is authority).",
+            "Tokens are sent FROM here to mock_jupiter."
+          ],
+          "writable": true
+        },
+        {
+          "name": "pool_dest_vault",
+          "docs": [
+            "Shuffle Protocol vault for destination asset (Pool PDA is authority).",
+            "Tokens are received INTO here from mock_jupiter."
+          ],
+          "writable": true
+        },
+        {
+          "name": "jupiter_program",
+          "docs": [
+            "mock_jupiter program to CPI into"
+          ]
+        },
+        {
+          "name": "jupiter_swap_pool",
+          "docs": [
+            "mock_jupiter swap_pool PDA"
+          ],
+          "writable": true
+        },
+        {
+          "name": "jupiter_source_vault",
+          "docs": [
+            "mock_jupiter source vault (receives source tokens from our pool)"
+          ],
+          "writable": true
+        },
+        {
+          "name": "jupiter_dest_vault",
+          "docs": [
+            "mock_jupiter destination vault (sends dest tokens to our pool)"
+          ],
+          "writable": true
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount_in",
+          "type": "u64"
+        },
+        {
+          "name": "min_amount_out",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "transfer_callback",
+      "docs": [
+        "Callback handler for transfer computation.",
+        "Receives both updated balances and writes them atomically."
+      ],
+      "discriminator": [
+        35,
+        168,
+        41,
+        159,
+        124,
+        77,
+        12,
+        157
+      ],
+      "accounts": [
+        {
+          "name": "arcium_program",
+          "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
+        },
+        {
+          "name": "comp_def_account"
+        },
+        {
+          "name": "mxe_account"
+        },
+        {
+          "name": "computation_account"
+        },
+        {
+          "name": "cluster_account"
+        },
+        {
+          "name": "instructions_sysvar",
+          "address": "Sysvar1nstructions1111111111111111111111111"
+        },
+        {
+          "name": "sender_account",
+          "writable": true
+        },
+        {
+          "name": "recipient_account",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "output",
+          "type": {
+            "defined": {
+              "name": "SignedComputationOutputs",
+              "generics": [
+                {
+                  "kind": "type",
+                  "type": {
+                    "defined": {
+                      "name": "TransferOutput"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "ArciumSignerAccount",
+      "discriminator": [
+        214,
+        157,
+        122,
+        114,
+        117,
+        44,
+        214,
+        74
+      ]
+    },
+    {
+      "name": "BatchAccumulator",
+      "discriminator": [
+        6,
+        77,
+        193,
+        89,
+        120,
+        187,
+        6,
+        254
+      ]
+    },
+    {
+      "name": "BatchLog",
+      "discriminator": [
+        26,
+        69,
+        38,
+        134,
+        132,
+        11,
+        186,
+        78
+      ]
+    },
+    {
+      "name": "ClockAccount",
+      "discriminator": [
+        152,
+        171,
+        158,
+        195,
+        75,
+        61,
+        51,
+        8
+      ]
+    },
+    {
+      "name": "Cluster",
+      "discriminator": [
+        236,
+        225,
+        118,
+        228,
+        173,
+        106,
+        18,
+        60
+      ]
+    },
+    {
+      "name": "ComputationDefinitionAccount",
+      "discriminator": [
+        245,
+        176,
+        217,
+        221,
+        253,
+        104,
+        172,
+        200
+      ]
+    },
+    {
+      "name": "FeePool",
+      "discriminator": [
+        172,
+        38,
+        77,
+        146,
+        148,
+        5,
+        51,
+        242
+      ]
+    },
+    {
+      "name": "MXEAccount",
+      "discriminator": [
+        103,
+        26,
+        85,
+        250,
+        179,
+        159,
+        17,
+        117
+      ]
+    },
+    {
+      "name": "Pool",
+      "discriminator": [
+        241,
+        154,
+        109,
+        4,
+        17,
+        177,
+        109,
+        188
+      ]
+    },
+    {
+      "name": "UserProfile",
+      "discriminator": [
+        32,
+        37,
+        119,
+        205,
+        179,
+        180,
+        13,
+        194
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "BatchExecutedEvent",
+      "discriminator": [
+        215,
+        35,
+        42,
+        14,
+        15,
+        94,
+        132,
+        29
+      ]
+    },
+    {
+      "name": "BatchExecutionFailedEvent",
+      "discriminator": [
+        41,
+        132,
+        210,
+        92,
+        242,
+        217,
+        162,
+        248
+      ]
+    },
+    {
+      "name": "BatchReadyEvent",
+      "discriminator": [
+        146,
+        22,
+        62,
+        255,
+        19,
+        135,
+        69,
+        35
+      ]
+    },
+    {
+      "name": "DepositEvent",
+      "discriminator": [
+        120,
+        248,
+        61,
+        83,
+        31,
+        142,
+        107,
+        144
+      ]
+    },
+    {
+      "name": "OrderPlacedEvent",
+      "discriminator": [
+        245,
+        198,
+        202,
+        247,
+        110,
+        231,
+        254,
+        156
+      ]
+    },
+    {
+      "name": "SettlementEvent",
+      "discriminator": [
+        48,
+        132,
+        218,
+        111,
+        54,
+        173,
+        61,
+        129
+      ]
+    },
+    {
+      "name": "SumEvent",
+      "discriminator": [
+        0,
+        53,
+        65,
+        58,
+        177,
+        58,
+        143,
+        178
+      ]
+    },
+    {
+      "name": "TransferEvent",
+      "discriminator": [
+        100,
+        10,
+        46,
+        113,
+        8,
+        28,
+        179,
+        125
+      ]
+    },
+    {
+      "name": "WithdrawEvent",
+      "discriminator": [
+        22,
+        9,
+        133,
+        26,
+        160,
+        44,
+        71,
+        192
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "ProtocolPaused",
+      "msg": "Protocol is paused"
+    },
+    {
+      "code": 6001,
+      "name": "Unauthorized",
+      "msg": "Unauthorized"
+    },
+    {
+      "code": 6002,
+      "name": "InvalidAmount",
+      "msg": "Invalid amount"
+    },
+    {
+      "code": 6003,
+      "name": "InvalidAsset",
+      "msg": "Invalid asset"
+    },
+    {
+      "code": 6004,
+      "name": "InvalidAssetId",
+      "msg": "Invalid asset ID (must be 0-3 for USDC, TSLA, SPY, AAPL)"
+    },
+    {
+      "code": 6005,
+      "name": "InvalidPairId",
+      "msg": "Invalid pair ID (must be 0-5)"
+    },
+    {
+      "code": 6006,
+      "name": "InvalidMint",
+      "msg": "Invalid token mint"
+    },
+    {
+      "code": 6007,
+      "name": "InvalidOwner",
+      "msg": "Invalid token account owner"
+    },
+    {
+      "code": 6008,
+      "name": "FeeTooHigh",
+      "msg": "Fee too high (max 10%)"
+    },
+    {
+      "code": 6009,
+      "name": "PendingOrderExists",
+      "msg": "User has a pending order - settle before placing a new one"
+    },
+    {
+      "code": 6010,
+      "name": "NoPendingOrder",
+      "msg": "No pending order to settle"
+    },
+    {
+      "code": 6011,
+      "name": "BatchNotFinalized",
+      "msg": "Batch not yet executed"
+    },
+    {
+      "code": 6012,
+      "name": "BatchIdMismatch",
+      "msg": "Batch ID mismatch"
+    },
+    {
+      "code": 6013,
+      "name": "InvalidBatchId",
+      "msg": "Invalid batch ID - doesn't match BatchLog"
+    },
+    {
+      "code": 6014,
+      "name": "SwapsAlreadyExecuted",
+      "msg": "Swaps already executed for this batch"
+    },
+    {
+      "code": 6015,
+      "name": "InsufficientBalance",
+      "msg": "Insufficient balance"
+    },
+    {
+      "code": 6016,
+      "name": "MinOutputNotMet",
+      "msg": "Minimum output not met"
+    },
+    {
+      "code": 6017,
+      "name": "DivisionByZero",
+      "msg": "Division by zero in settlement - no input for this pair"
+    },
+    {
+      "code": 6018,
+      "name": "AbortedComputation",
+      "msg": "The computation was aborted"
+    },
+    {
+      "code": 6019,
+      "name": "ComputationFailed",
+      "msg": "MPC computation failed"
+    },
+    {
+      "code": 6020,
+      "name": "ClusterNotSet",
+      "msg": "Cluster not set"
+    },
+    {
+      "code": 6021,
+      "name": "RecipientAccountNotFound",
+      "msg": "Recipient account not found - they must create a privacy account first"
+    },
+    {
+      "code": 6022,
+      "name": "FaucetLimitExceeded",
+      "msg": "Faucet limit exceeded - you can only claim up to 1000 USDC total"
+    }
+  ],
+  "types": [
+    {
+      "name": "AccumulateOrderOutput",
+      "docs": [
+        "The output of the callback instruction. Provided as a struct with ordered fields",
+        "as anchor does not support tuples and tuple structs yet."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "field_0",
+            "type": {
+              "defined": {
+                "name": "AccumulateOrderOutputStruct0"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "AccumulateOrderOutputStruct0",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "field_0",
+            "type": "bool"
+          },
+          {
+            "name": "field_1",
+            "type": "bool"
+          },
+          {
+            "name": "field_2",
+            "type": {
+              "defined": {
+                "name": "SharedEncryptedStruct",
+                "generics": [
+                  {
+                    "kind": "const",
+                    "value": "1"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "field_3",
+            "type": {
+              "defined": {
+                "name": "MXEEncryptedStruct",
+                "generics": [
+                  {
+                    "kind": "const",
+                    "value": "12"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Activation",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "activation_epoch",
+            "type": {
+              "defined": {
+                "name": "Epoch"
+              }
+            }
+          },
+          {
+            "name": "deactivation_epoch",
+            "type": {
+              "defined": {
+                "name": "Epoch"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "AddBalanceOutput",
+      "docs": [
+        "The output of the callback instruction. Provided as a struct with ordered fields",
+        "as anchor does not support tuples and tuple structs yet."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "field_0",
+            "type": {
+              "defined": {
+                "name": "SharedEncryptedStruct",
+                "generics": [
+                  {
+                    "kind": "const",
+                    "value": "1"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "AddTogetherOutput",
+      "docs": [
+        "The output of the callback instruction. Provided as a struct with ordered fields",
+        "as anchor does not support tuples and tuple structs yet."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "field_0",
+            "type": {
+              "defined": {
+                "name": "SharedEncryptedStruct",
+                "generics": [
+                  {
+                    "kind": "const",
+                    "value": "1"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "ArciumSignerAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BN254G2BLSPublicKey",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "array": [
+              "u8",
+              64
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "BatchAccumulator",
+      "docs": [
+        "Transient batch state - encrypted accumulator for the currently active batch.",
+        "Reset after each batch execution.",
+        "",
+        "PDA derived with seeds: [\"batch_accumulator\"]",
+        "",
+        "NOTE: BatchState in MPC has 12 encrypted u64 values (6 pairs × 2 totals each).",
+        "order_count is tracked as plaintext on Solana and passed to MPC for batch_ready calculation."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "batch_id",
+            "docs": [
+              "Current batch ID (incrementing)"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "order_count",
+            "docs": [
+              "Number of orders in current batch (plaintext, for batch_ready calculation)"
+            ],
+            "type": "u8"
+          },
+          {
+            "name": "pair_states",
+            "docs": [
+              "Encrypted accumulator state for each of the 6 pairs"
+            ],
+            "type": {
+              "array": [
+                {
+                  "defined": {
+                    "name": "PairAccumulator"
+                  }
+                },
+                6
+              ]
+            }
+          },
+          {
+            "name": "mxe_nonce",
+            "docs": [
+              "MXE output nonce for next read (updated on each MPC callback)"
+            ],
+            "type": "u128"
+          },
+          {
+            "name": "bump",
+            "docs": [
+              "PDA bump seed"
+            ],
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BatchExecutedEvent",
+      "docs": [
+        "Emitted when batch MPC completes and BatchLog is created",
+        "Backend listens for this to call execute_swaps"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "batch_id",
+            "type": "u64"
+          },
+          {
+            "name": "batch_log",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BatchExecutionFailedEvent",
+      "docs": [
+        "Emitted when batch execution fails, signals retry needed"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "batch_id",
+            "type": "u64"
+          },
+          {
+            "name": "error_code",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BatchLog",
+      "docs": [
+        "Historical batch results - immutable plaintext record after execution.",
+        "Used for user lazy settlement.",
+        "",
+        "PDA derived with seeds: [\"batch_log\", batch_id.to_le_bytes()]"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "batch_id",
+            "docs": [
+              "Batch ID this log corresponds to"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "results",
+            "docs": [
+              "Execution results for each of the 6 pairs"
+            ],
+            "type": {
+              "array": [
+                {
+                  "defined": {
+                    "name": "PairResult"
+                  }
+                },
+                6
+              ]
+            }
+          },
+          {
+            "name": "executed_at",
+            "docs": [
+              "Unix timestamp when batch was executed"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "swaps_executed",
+            "docs": [
+              "Whether vault↔reserve swaps have been executed for this batch"
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "docs": [
+              "PDA bump seed"
+            ],
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BatchReadyEvent",
+      "docs": [
+        "Emitted when batch meets execution criteria (8+ orders, 2+ pairs)",
+        "MPC computes requirements check and reveals batch_ready boolean",
+        "Can be used by external services (webhooks) to trigger batch execution"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "batch_id",
+            "type": "u64"
+          },
+          {
+            "name": "batch_accumulator",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CalculatePayoutOutput",
+      "docs": [
+        "The output of the callback instruction. Provided as a struct with ordered fields",
+        "as anchor does not support tuples and tuple structs yet."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "field_0",
+            "type": {
+              "defined": {
+                "name": "CalculatePayoutOutputStruct0"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "CalculatePayoutOutputStruct0",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "field_0",
+            "type": {
+              "defined": {
+                "name": "SharedEncryptedStruct",
+                "generics": [
+                  {
+                    "kind": "const",
+                    "value": "1"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "field_1",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "CircuitSource",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Local",
+            "fields": [
+              {
+                "defined": {
+                  "name": "LocalCircuitSource"
+                }
+              }
+            ]
+          },
+          {
+            "name": "OnChain",
+            "fields": [
+              {
+                "defined": {
+                  "name": "OnChainCircuitSource"
+                }
+              }
+            ]
+          },
+          {
+            "name": "OffChain",
+            "fields": [
+              {
+                "defined": {
+                  "name": "OffChainCircuitSource"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "ClockAccount",
+      "docs": [
+        "An account storing the current network epoch"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "start_epoch",
+            "type": {
+              "defined": {
+                "name": "Epoch"
+              }
+            }
+          },
+          {
+            "name": "current_epoch",
+            "type": {
+              "defined": {
+                "name": "Epoch"
+              }
+            }
+          },
+          {
+            "name": "start_epoch_timestamp",
+            "type": {
+              "defined": {
+                "name": "Timestamp"
+              }
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Cluster",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "td_info",
+            "type": {
+              "option": {
+                "defined": {
+                  "name": "NodeMetadata"
+                }
+              }
+            }
+          },
+          {
+            "name": "authority",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "cluster_size",
+            "type": "u16"
+          },
+          {
+            "name": "activation",
+            "type": {
+              "defined": {
+                "name": "Activation"
+              }
+            }
+          },
+          {
+            "name": "max_capacity",
+            "type": "u64"
+          },
+          {
+            "name": "cu_price",
+            "type": "u64"
+          },
+          {
+            "name": "cu_price_proposals",
+            "type": {
+              "array": [
+                "u64",
+                32
+              ]
+            }
+          },
+          {
+            "name": "last_updated_epoch",
+            "type": {
+              "defined": {
+                "name": "Epoch"
+              }
+            }
+          },
+          {
+            "name": "nodes",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "NodeRef"
+                }
+              }
+            }
+          },
+          {
+            "name": "pending_nodes",
+            "type": {
+              "vec": "u32"
+            }
+          },
+          {
+            "name": "bls_public_key",
+            "type": {
+              "defined": {
+                "name": "SetUnset",
+                "generics": [
+                  {
+                    "kind": "type",
+                    "type": {
+                      "defined": {
+                        "name": "BN254G2BLSPublicKey"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ComputationDefinitionAccount",
+      "docs": [
+        "An account representing a [ComputationDefinition] in a MXE."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "finalization_authority",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "cu_amount",
+            "type": "u64"
+          },
+          {
+            "name": "definition",
+            "type": {
+              "defined": {
+                "name": "ComputationDefinitionMeta"
+              }
+            }
+          },
+          {
+            "name": "circuit_source",
+            "type": {
+              "defined": {
+                "name": "CircuitSource"
+              }
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ComputationDefinitionMeta",
+      "docs": [
+        "A computation definition for execution in a MXE."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "circuit_len",
+            "type": "u32"
+          },
+          {
+            "name": "signature",
+            "type": {
+              "defined": {
+                "name": "ComputationSignature"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "ComputationSignature",
+      "docs": [
+        "The signature of a computation defined in a [ComputationDefinition]."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "parameters",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "Parameter"
+                }
+              }
+            }
+          },
+          {
+            "name": "outputs",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "Output"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "DepositEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "encrypted_balance",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "nonce",
+            "type": {
+              "array": [
+                "u8",
+                16
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Epoch",
+      "docs": [
+        "The network epoch"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          "u64"
+        ]
+      }
+    },
+    {
+      "name": "FeePool",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "InitBatchStateOutput",
+      "docs": [
+        "The output of the callback instruction. Provided as a struct with ordered fields",
+        "as anchor does not support tuples and tuple structs yet."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "field_0",
+            "type": {
+              "defined": {
+                "name": "MXEEncryptedStruct",
+                "generics": [
+                  {
+                    "kind": "const",
+                    "value": "12"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "LocalCircuitSource",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "MxeKeygen"
+          },
+          {
+            "name": "MxeKeyRecoveryInit"
+          },
+          {
+            "name": "MxeKeyRecoveryFinalize"
+          }
+        ]
+      }
+    },
+    {
+      "name": "MXEAccount",
+      "docs": [
+        "A MPC Execution Environment."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "cluster",
+            "type": {
+              "option": "u32"
+            }
+          },
+          {
+            "name": "keygen_offset",
+            "type": "u64"
+          },
+          {
+            "name": "key_recovery_init_offset",
+            "type": "u64"
+          },
+          {
+            "name": "mxe_program_id",
+            "type": "pubkey"
+          },
+          {
+            "name": "authority",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "utility_pubkeys",
+            "type": {
+              "defined": {
+                "name": "SetUnset",
+                "generics": [
+                  {
+                    "kind": "type",
+                    "type": {
+                      "defined": {
+                        "name": "UtilityPubkeys"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "fallback_clusters",
+            "type": {
+              "vec": "u32"
+            }
+          },
+          {
+            "name": "rejected_clusters",
+            "type": {
+              "vec": "u32"
+            }
+          },
+          {
+            "name": "computation_definitions",
+            "type": {
+              "vec": "u32"
+            }
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "MxeStatus"
+              }
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "MXEEncryptedStruct",
+      "generics": [
+        {
+          "kind": "const",
+          "name": "LEN",
+          "type": "usize"
+        }
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "nonce",
+            "type": "u128"
+          },
+          {
+            "name": "ciphertexts",
+            "type": {
+              "array": [
+                {
+                  "array": [
+                    "u8",
+                    32
+                  ]
+                },
+                {
+                  "generic": "LEN"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "MxeStatus",
+      "docs": [
+        "The status of an MXE."
+      ],
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Active"
+          },
+          {
+            "name": "Recovery"
+          }
+        ]
+      }
+    },
+    {
+      "name": "NodeMetadata",
+      "docs": [
+        "location as [ISO 3166-1 alpha-2](https://www.iso.org/iso-3166-country-codes.html) country code"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "ip",
+            "type": {
+              "array": [
+                "u8",
+                4
+              ]
+            }
+          },
+          {
+            "name": "peer_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "location",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "NodeRef",
+      "docs": [
+        "A reference to a node in the cluster.",
+        "The offset is to derive the Node Account.",
+        "The current_total_rewards is the total rewards the node has received so far in the current",
+        "epoch."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "offset",
+            "type": "u32"
+          },
+          {
+            "name": "current_total_rewards",
+            "type": "u64"
+          },
+          {
+            "name": "vote",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "OffChainCircuitSource",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "source",
+            "type": "string"
+          },
+          {
+            "name": "hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "OnChainCircuitSource",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "is_completed",
+            "type": "bool"
+          },
+          {
+            "name": "upload_auth",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "OrderPlacedEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "batch_id",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "OrderTicket",
+      "docs": [
+        "An embedded order record stored in UserProfile.",
+        "Replaces the separate Order PDA accounts from the previous architecture."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "batch_id",
+            "docs": [
+              "Which batch this order belongs to"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "pair_id",
+            "docs": [
+              "Encrypted pair ID (0-5) - hidden on-chain"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "direction",
+            "docs": [
+              "Encrypted direction: A_to_B (0) or B_to_A (1)"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "encrypted_amount",
+            "docs": [
+              "Encrypted order amount"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "order_nonce",
+            "docs": [
+              "Nonce used for encryption (needed for user to decrypt order)"
+            ],
+            "type": "u128"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Output",
+      "docs": [
+        "An output of a computation.",
+        "We currently don't support encrypted outputs yet since encrypted values are passed via",
+        "data objects."
+      ],
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "PlaintextBool"
+          },
+          {
+            "name": "PlaintextU8"
+          },
+          {
+            "name": "PlaintextU16"
+          },
+          {
+            "name": "PlaintextU32"
+          },
+          {
+            "name": "PlaintextU64"
+          },
+          {
+            "name": "PlaintextU128"
+          },
+          {
+            "name": "Ciphertext"
+          },
+          {
+            "name": "ArcisX25519Pubkey"
+          },
+          {
+            "name": "PlaintextFloat"
+          },
+          {
+            "name": "PlaintextPoint"
+          },
+          {
+            "name": "PlaintextI8"
+          },
+          {
+            "name": "PlaintextI16"
+          },
+          {
+            "name": "PlaintextI32"
+          },
+          {
+            "name": "PlaintextI64"
+          },
+          {
+            "name": "PlaintextI128"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PairAccumulator",
+      "docs": [
+        "Per-pair encrypted totals within a batch.",
+        "Stores the cumulative buy/sell pressure for a single trading pair."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "encrypted_token_a_in",
+            "docs": [
+              "Encrypted total of Token A offered to sell in this batch"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "encrypted_token_b_in",
+            "docs": [
+              "Encrypted total of Token B offered to sell in this batch"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "PairResult",
+      "docs": [
+        "Per-pair execution results after batch finalization (plaintext).",
+        "Used for lazy settlement calculations."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "total_a_in",
+            "docs": [
+              "Revealed total Token A input for this pair"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "total_b_in",
+            "docs": [
+              "Revealed total Token B input for this pair"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "final_pool_a",
+            "docs": [
+              "Amount of Token A held after netting + swap"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "final_pool_b",
+            "docs": [
+              "Amount of Token B held after netting + swap"
+            ],
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Parameter",
+      "docs": [
+        "A parameter of a computation.",
+        "We differentiate between plaintext and encrypted parameters and data objects.",
+        "Plaintext parameters are directly provided as their value.",
+        "Encrypted parameters are provided as an offchain reference to the data.",
+        "Data objects are provided as a reference to the data object account."
+      ],
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "PlaintextBool"
+          },
+          {
+            "name": "PlaintextU8"
+          },
+          {
+            "name": "PlaintextU16"
+          },
+          {
+            "name": "PlaintextU32"
+          },
+          {
+            "name": "PlaintextU64"
+          },
+          {
+            "name": "PlaintextU128"
+          },
+          {
+            "name": "Ciphertext"
+          },
+          {
+            "name": "ArcisX25519Pubkey"
+          },
+          {
+            "name": "ArcisSignature"
+          },
+          {
+            "name": "PlaintextFloat"
+          },
+          {
+            "name": "PlaintextI8"
+          },
+          {
+            "name": "PlaintextI16"
+          },
+          {
+            "name": "PlaintextI32"
+          },
+          {
+            "name": "PlaintextI64"
+          },
+          {
+            "name": "PlaintextI128"
+          },
+          {
+            "name": "PlaintextPoint"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Pool",
+      "docs": [
+        "Central state account for the Shuffle Protocol protocol.",
+        "PDA derived with seeds: [\"pool\"]"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "docs": [
+              "Admin authority that can update settings and pause the protocol.",
+              "Should be a multisig for production."
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "operator",
+            "docs": [
+              "Operator wallet that can trigger batch execution.",
+              "This is typically an automated backend service."
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "treasury",
+            "docs": [
+              "Treasury account where execution fees are sent."
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "usdc_mint",
+            "docs": [
+              "USDC token mint address"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "tsla_mint",
+            "docs": [
+              "TSLA (tokenized Tesla) mint address"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "spy_mint",
+            "docs": [
+              "SPY (tokenized S&P 500 ETF) mint address"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "aapl_mint",
+            "docs": [
+              "AAPL (tokenized Apple) mint address"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "current_batch_id",
+            "docs": [
+              "Current active batch ID"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "execution_trigger_count",
+            "docs": [
+              "Number of orders required to trigger batch execution (default: 8)"
+            ],
+            "type": "u8"
+          },
+          {
+            "name": "execution_fee_bps",
+            "docs": [
+              "Execution fee in basis points.",
+              "50 = 0.5%, 100 = 1%, etc.",
+              "Max allowed is 1000 (10%)."
+            ],
+            "type": "u16"
+          },
+          {
+            "name": "bump",
+            "docs": [
+              "PDA bump seed for signing transactions.",
+              "Used when the Pool PDA needs to sign (e.g., token transfers from vaults)."
+            ],
+            "type": "u8"
+          },
+          {
+            "name": "paused",
+            "docs": [
+              "Emergency pause flag.",
+              "When true, most operations are blocked."
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "total_fees_collected",
+            "docs": [
+              "Total fees collected in USDC base units (for analytics)."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "total_batches_executed",
+            "docs": [
+              "Total batches executed (for analytics)."
+            ],
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RevealBatchOutput",
+      "docs": [
+        "The output of the callback instruction. Provided as a struct with ordered fields",
+        "as anchor does not support tuples and tuple structs yet."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "field_0",
+            "type": {
+              "array": [
+                "u64",
+                12
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "SetUnset",
+      "docs": [
+        "Utility struct to store a value that needs to be set by a certain number of participants (keys",
+        "in our case). Once all participants have set the value, the value is considered set and we only",
+        "store it once."
+      ],
+      "generics": [
+        {
+          "kind": "type",
+          "name": "T"
+        }
+      ],
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Set",
+            "fields": [
+              {
+                "generic": "T"
+              }
+            ]
+          },
+          {
+            "name": "Unset",
+            "fields": [
+              {
+                "generic": "T"
+              },
+              {
+                "vec": "bool"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "SettlementEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "batch_id",
+            "type": "u64"
+          },
+          {
+            "name": "encrypted_payout",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "nonce",
+            "type": {
+              "array": [
+                "u8",
+                16
+              ]
+            }
+          },
+          {
+            "name": "revealed_payout",
+            "docs": [
+              "DEBUG: Revealed payout value from MPC for verification"
+            ],
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SharedEncryptedStruct",
+      "generics": [
+        {
+          "kind": "const",
+          "name": "LEN",
+          "type": "usize"
+        }
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "encryption_key",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "nonce",
+            "type": "u128"
+          },
+          {
+            "name": "ciphertexts",
+            "type": {
+              "array": [
+                {
+                  "array": [
+                    "u8",
+                    32
+                  ]
+                },
+                {
+                  "generic": "LEN"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "SignedComputationOutputs",
+      "generics": [
+        {
+          "kind": "type",
+          "name": "O"
+        }
+      ],
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Success",
+            "fields": [
+              {
+                "generic": "O"
+              },
+              {
+                "array": [
+                  "u8",
+                  64
+                ]
+              }
+            ]
+          },
+          {
+            "name": "Failure"
+          },
+          {
+            "name": "MarkerForIdlBuildDoNotUseThis",
+            "fields": [
+              {
+                "generic": "O"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "SubBalanceOutput",
+      "docs": [
+        "The output of the callback instruction. Provided as a struct with ordered fields",
+        "as anchor does not support tuples and tuple structs yet."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "field_0",
+            "type": {
+              "defined": {
+                "name": "SubBalanceOutputStruct0"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "SubBalanceOutputStruct0",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "field_0",
+            "type": "bool"
+          },
+          {
+            "name": "field_1",
+            "type": {
+              "defined": {
+                "name": "SharedEncryptedStruct",
+                "generics": [
+                  {
+                    "kind": "const",
+                    "value": "1"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "SumEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "sum",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "nonce",
+            "type": {
+              "array": [
+                "u8",
+                16
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Timestamp",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "timestamp",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TransferEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "from",
+            "type": "pubkey"
+          },
+          {
+            "name": "to",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "sender_nonce",
+            "type": {
+              "array": [
+                "u8",
+                16
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "TransferOutput",
+      "docs": [
+        "The output of the callback instruction. Provided as a struct with ordered fields",
+        "as anchor does not support tuples and tuple structs yet."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "field_0",
+            "type": {
+              "defined": {
+                "name": "TransferOutputStruct0"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "TransferOutputStruct0",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "field_0",
+            "type": {
+              "defined": {
+                "name": "SharedEncryptedStruct",
+                "generics": [
+                  {
+                    "kind": "const",
+                    "value": "1"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "name": "field_1",
+            "type": {
+              "defined": {
+                "name": "SharedEncryptedStruct",
+                "generics": [
+                  {
+                    "kind": "const",
+                    "value": "1"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "UserProfile",
+      "docs": [
+        "Per-user account that stores encrypted balances for all 4 assets.",
+        "The balances are encrypted using Arcium MPC, so on-chain observers",
+        "cannot see actual amounts.",
+        "",
+        "PDA derived with seeds: [\"user\", user_wallet.key().as_ref()]"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "docs": [
+              "The wallet that owns this profile."
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "user_pubkey",
+            "docs": [
+              "User's x25519 public key for encryption/decryption.",
+              "Used by Arcium MPC to encrypt values that only this user can decrypt."
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "usdc_credit",
+            "docs": [
+              "Encrypted USDC balance (ciphertext)."
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "tsla_credit",
+            "docs": [
+              "Encrypted TSLA (tokenized Tesla) balance."
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "spy_credit",
+            "docs": [
+              "Encrypted SPY (tokenized S&P 500 ETF) balance."
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "aapl_credit",
+            "docs": [
+              "Encrypted AAPL (tokenized Apple) balance."
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "usdc_viewable",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "tsla_viewable",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "spy_viewable",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "aapl_viewable",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "pending_order",
+            "docs": [
+              "Current pending order awaiting settlement.",
+              "Only one order per user at a time. Must settle before placing new order.",
+              "None means no pending order."
+            ],
+            "type": {
+              "option": {
+                "defined": {
+                  "name": "OrderTicket"
+                }
+              }
+            }
+          },
+          {
+            "name": "pending_asset_id",
+            "docs": [
+              "Asset ID for pending MPC operation (0=USDC, 1=TSLA, 2=SPY, 3=AAPL).",
+              "Set during add_balance/sub_balance, read in callback to update correct balance."
+            ],
+            "type": "u8"
+          },
+          {
+            "name": "pending_withdrawal_amount",
+            "docs": [
+              "Pending withdrawal amount (in token units).",
+              "Set during sub_balance, used by callback for deferred token transfer."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "usdc_nonce",
+            "docs": [
+              "USDC encryption nonce - updated after each USDC MPC operation"
+            ],
+            "type": "u128"
+          },
+          {
+            "name": "tsla_nonce",
+            "docs": [
+              "TSLA encryption nonce"
+            ],
+            "type": "u128"
+          },
+          {
+            "name": "spy_nonce",
+            "docs": [
+              "SPY encryption nonce"
+            ],
+            "type": "u128"
+          },
+          {
+            "name": "aapl_nonce",
+            "docs": [
+              "AAPL encryption nonce"
+            ],
+            "type": "u128"
+          },
+          {
+            "name": "order_count",
+            "docs": [
+              "Total number of orders ever created by this user."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "total_faucet_claimed",
+            "docs": [
+              "Total USDC claimed from faucet (tracked to enforce per-user limit)."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "docs": [
+              "PDA bump seed."
+            ],
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UtilityPubkeys",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "x25519_pubkey",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "ed25519_verifying_key",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "elgamal_pubkey",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "pubkey_validity_proof",
+            "type": {
+              "array": [
+                "u8",
+                64
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "WithdrawEvent",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "encrypted_balance",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "nonce",
+            "type": {
+              "array": [
+                "u8",
+                16
+              ]
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
