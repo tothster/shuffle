@@ -140,11 +140,11 @@ async function main() {
   }
   
   // Step 5: Link SDK globally
-  log.step(5, 'Linking SDK globally (npm link)...');
+  log.step(5, 'Linking SDK globally (npm link --force)...');
   console.log(`${colors.dim}    This makes the 'shuffle' CLI available in your terminal${colors.reset}`);
   
   try {
-    runCommand('npm link', sdkDir);
+    runCommand('npm link --force', sdkDir);
     log.success('SDK linked globally');
     
     // Verify it worked
@@ -153,7 +153,7 @@ async function main() {
       log.success(`shuffle CLI available at: ${result.output.trim()}`);
     }
   } catch (error) {
-    log.warn('npm link failed - you may need to run with sudo or fix npm permissions');
+    log.warn('npm link --force failed - you may need to fix npm permissions');
     console.log(`${colors.dim}    See: https://docs.npmjs.com/resolving-eacces-permissions-errors-when-installing-packages-globally${colors.reset}`);
     
     const proceed = await promptUser('Continue without global link? (Y/n): ', true);

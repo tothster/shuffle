@@ -293,6 +293,16 @@ async function main() {
         // Ensure CLI has execute permission
         execSync('chmod +x dist/cli/index.js', { cwd: sdkDir, stdio: 'pipe' });
         log.success('SDK rebuilt with updated program ID');
+
+        // Re-link SDK globally (force to overwrite existing binary)
+        try {
+          log.info('Linking SDK globally (npm link --force)...');
+          log.cmd('cd sdk && npm link --force');
+          execSync('npm link --force', { cwd: sdkDir, stdio: 'pipe' });
+          log.success('SDK linked globally');
+        } catch (e) {
+          log.warn('npm link --force failed - you may need to fix npm permissions');
+        }
       } else {
         log.success('SDK program ID already matches contract');
       }
