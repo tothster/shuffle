@@ -45,7 +45,7 @@ const COMP_DEF_OFFSET_CALCULATE_PAYOUT: u32 = comp_def_offset("calculate_payout"
 // This is the unique address of our deployed program on Solana.
 //
 
-declare_id!("DQ29rUToHVTyp2QxP3C7nt1MuYp6p6PKYNaDpGooPAFq");
+declare_id!("6Z7cSgdW7YBQCwg6tjrnteeELom41PNrMfnwgiJTM7W5");
 
 // Shuffle Protocol - A privacy-preserving DeFi protocol for private DCA into tokenized stocks
 //
@@ -261,7 +261,12 @@ pub mod shuffle_protocol {
             &ctx.accounts.computation_account,
         ) {
             Ok(output) => output,
-            Err(_) => return Err(ErrorCode::AbortedComputation.into()),
+            Err(_) => {
+                // Clear pending_order so user can retry if MPC computation fails
+                msg!("MPC computation failed, clearing pending_order");
+                ctx.accounts.user_account.pending_order = None;
+                return Err(ErrorCode::AbortedComputation.into());
+            }
         };
 
         // MPC output is a 4-tuple: (has_funds, batch_ready, new_balance, new_batch_state)
@@ -696,7 +701,14 @@ pub mod shuffle_protocol {
     // =========================================================================
 
     pub fn init_add_together_comp_def(ctx: Context<InitAddTogetherCompDef>) -> Result<()> {
-        init_comp_def(ctx.accounts, None, None)?;
+        init_comp_def(
+            ctx.accounts,
+            Some(CircuitSource::OffChain(OffChainCircuitSource {
+                source: "https://gateway.pinata.cloud/ipfs/QmWqkkKcdEJDL3dXYUsUnoRqpL4DzZC1YvCpPqRHm2o54K".to_string(),
+                hash: circuit_hash!("add_together"),
+            })),
+            None,
+        )?;
         Ok(())
     }
 
@@ -707,35 +719,70 @@ pub mod shuffle_protocol {
     /// Initialize the add_balance computation definition.
     /// This must be called once before any encrypted deposits can be processed.
     pub fn init_add_balance_comp_def(ctx: Context<InitAddBalanceCompDef>) -> Result<()> {
-        init_comp_def(ctx.accounts, None, None)?;
+        init_comp_def(
+            ctx.accounts,
+            Some(CircuitSource::OffChain(OffChainCircuitSource {
+                source: "https://gateway.pinata.cloud/ipfs/QmYuq7SXDNgijLUep7PEPJvxmeMCU9to1rkzSAErq9xqbv".to_string(),
+                hash: circuit_hash!("add_balance"),
+            })),
+            None,
+        )?;
         Ok(())
     }
 
     /// Initialize the accumulate_order computation definition (Phase 8).
     /// This must be called once before orders can be placed.
     pub fn init_accumulate_order_comp_def(ctx: Context<InitAccumulateOrderCompDef>) -> Result<()> {
-        init_comp_def(ctx.accounts, None, None)?;
+        init_comp_def(
+            ctx.accounts,
+            Some(CircuitSource::OffChain(OffChainCircuitSource {
+                source: "https://gateway.pinata.cloud/ipfs/QmXi6PQYscxvM5RH3pTEpjnHbff1qN3rnmgmUB92SYhQ3B".to_string(),
+                hash: circuit_hash!("accumulate_order"),
+            })),
+            None,
+        )?;
         Ok(())
     }
 
     /// Initialize the init_batch_state computation definition (Phase 8).
     /// This must be called once for batch initialization.
     pub fn init_init_batch_state_comp_def(ctx: Context<InitInitBatchStateCompDef>) -> Result<()> {
-        init_comp_def(ctx.accounts, None, None)?;
+        init_comp_def(
+            ctx.accounts,
+            Some(CircuitSource::OffChain(OffChainCircuitSource {
+                source: "https://gateway.pinata.cloud/ipfs/QmbkTAio4nLhqiaV5mrZuin7xiz3aVr6BHGabZkT2dY5b6".to_string(),
+                hash: circuit_hash!("init_batch_state"),
+            })),
+            None,
+        )?;
         Ok(())
     }
 
     /// Initialize the reveal_batch computation definition (Phase 9).
     /// This must be called once before batch execution.
     pub fn init_reveal_batch_comp_def(ctx: Context<InitRevealBatchCompDef>) -> Result<()> {
-        init_comp_def(ctx.accounts, None, None)?;
+        init_comp_def(
+            ctx.accounts,
+            Some(CircuitSource::OffChain(OffChainCircuitSource {
+                source: "https://gateway.pinata.cloud/ipfs/QmdKYnK8zHHzaLNCSm8DEKsE6cHHQD1pRiFq1y1u3Ft5bq".to_string(),
+                hash: circuit_hash!("reveal_batch"),
+            })),
+            None,
+        )?;
         Ok(())
     }
 
     /// Initialize the calculate_payout computation definition (Phase 10).
     /// This must be called once before settlements can be processed.
     pub fn init_calculate_payout_comp_def(ctx: Context<InitCalculatePayoutCompDef>) -> Result<()> {
-        init_comp_def(ctx.accounts, None, None)?;
+        init_comp_def(
+            ctx.accounts,
+            Some(CircuitSource::OffChain(OffChainCircuitSource {
+                source: "https://gateway.pinata.cloud/ipfs/QmYtRi6vnhg96929v18wwVssrokDafHWqPoi1bPpDdVZju".to_string(),
+                hash: circuit_hash!("calculate_payout"),
+            })),
+            None,
+        )?;
         Ok(())
     }
 
@@ -992,7 +1039,14 @@ pub mod shuffle_protocol {
     /// Initialize the sub_balance computation definition.
     /// This must be called once before any encrypted withdrawals can be processed.
     pub fn init_sub_balance_comp_def(ctx: Context<InitSubBalanceCompDef>) -> Result<()> {
-        init_comp_def(ctx.accounts, None, None)?;
+        init_comp_def(
+            ctx.accounts,
+            Some(CircuitSource::OffChain(OffChainCircuitSource {
+                source: "https://gateway.pinata.cloud/ipfs/QmVkRDkWHXXQWhUG4Z8Kj74FqwrHMJLqGZ3QSSkoG9JYmA".to_string(),
+                hash: circuit_hash!("sub_balance"),
+            })),
+            None,
+        )?;
         Ok(())
     }
 
@@ -1189,7 +1243,14 @@ pub mod shuffle_protocol {
     /// Initialize the transfer computation definition.
     /// This must be called once before any P2P transfers can be processed.
     pub fn init_transfer_comp_def(ctx: Context<InitTransferCompDef>) -> Result<()> {
-        init_comp_def(ctx.accounts, None, None)?;
+        init_comp_def(
+            ctx.accounts,
+            Some(CircuitSource::OffChain(OffChainCircuitSource {
+                source: "https://gateway.pinata.cloud/ipfs/QmRnC2vX4BD8jFvzjsvhgWBgVPQdMPYqdctoz2hQ6h8sVm".to_string(),
+                hash: circuit_hash!("transfer"),
+            })),
+            None,
+        )?;
         Ok(())
     }
 
