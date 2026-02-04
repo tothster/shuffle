@@ -45,7 +45,7 @@ const COMP_DEF_OFFSET_CALCULATE_PAYOUT: u32 = comp_def_offset("calculate_payout"
 // This is the unique address of our deployed program on Solana.
 //
 
-declare_id!("6Z7cSgdW7YBQCwg6tjrnteeELom41PNrMfnwgiJTM7W5");
+declare_id!("D5hXtvqYeBHM4f8DqJuYyioPNDsQS6jhSRqj9DmFFvCH");
 
 // Shuffle Protocol - A privacy-preserving DeFi protocol for private DCA into tokenized stocks
 //
@@ -704,7 +704,7 @@ pub mod shuffle_protocol {
         init_comp_def(
             ctx.accounts,
             Some(CircuitSource::OffChain(OffChainCircuitSource {
-                source: "https://gateway.pinata.cloud/ipfs/QmWqkkKcdEJDL3dXYUsUnoRqpL4DzZC1YvCpPqRHm2o54K".to_string(),
+                source: "https://gateway.pinata.cloud/ipfs/QmQ4Jd2KEQZXPzE5xgXGQTz8BjtF4BHemSsjXWaE3QTuGT".to_string(),
                 hash: circuit_hash!("add_together"),
             })),
             None,
@@ -722,7 +722,7 @@ pub mod shuffle_protocol {
         init_comp_def(
             ctx.accounts,
             Some(CircuitSource::OffChain(OffChainCircuitSource {
-                source: "https://gateway.pinata.cloud/ipfs/QmYuq7SXDNgijLUep7PEPJvxmeMCU9to1rkzSAErq9xqbv".to_string(),
+                source: "https://gateway.pinata.cloud/ipfs/QmdbkwigmEYcXPaDGdFJYhVKGC2c1WDfznBBxt8Rc1vZmM".to_string(),
                 hash: circuit_hash!("add_balance"),
             })),
             None,
@@ -736,7 +736,7 @@ pub mod shuffle_protocol {
         init_comp_def(
             ctx.accounts,
             Some(CircuitSource::OffChain(OffChainCircuitSource {
-                source: "https://gateway.pinata.cloud/ipfs/QmXi6PQYscxvM5RH3pTEpjnHbff1qN3rnmgmUB92SYhQ3B".to_string(),
+                source: "https://gateway.pinata.cloud/ipfs/Qmaeq41Z2VQu6o5z4cmm4uK4EHXP14EneyTRSE33H5Vt3T".to_string(),
                 hash: circuit_hash!("accumulate_order"),
             })),
             None,
@@ -750,7 +750,7 @@ pub mod shuffle_protocol {
         init_comp_def(
             ctx.accounts,
             Some(CircuitSource::OffChain(OffChainCircuitSource {
-                source: "https://gateway.pinata.cloud/ipfs/QmbkTAio4nLhqiaV5mrZuin7xiz3aVr6BHGabZkT2dY5b6".to_string(),
+                source: "https://gateway.pinata.cloud/ipfs/QmbBzp7G3o2KqGPFdzjB5Y7ioujpvR5TT54bpLsoo7QZv7".to_string(),
                 hash: circuit_hash!("init_batch_state"),
             })),
             None,
@@ -764,7 +764,7 @@ pub mod shuffle_protocol {
         init_comp_def(
             ctx.accounts,
             Some(CircuitSource::OffChain(OffChainCircuitSource {
-                source: "https://gateway.pinata.cloud/ipfs/QmdKYnK8zHHzaLNCSm8DEKsE6cHHQD1pRiFq1y1u3Ft5bq".to_string(),
+                source: "https://gateway.pinata.cloud/ipfs/Qmc311AdUo1eE7Pm8F8ctDEfX5FJ2SQ4ATDvJi4YXMjmQ8".to_string(),
                 hash: circuit_hash!("reveal_batch"),
             })),
             None,
@@ -778,7 +778,7 @@ pub mod shuffle_protocol {
         init_comp_def(
             ctx.accounts,
             Some(CircuitSource::OffChain(OffChainCircuitSource {
-                source: "https://gateway.pinata.cloud/ipfs/QmYtRi6vnhg96929v18wwVssrokDafHWqPoi1bPpDdVZju".to_string(),
+                source: "https://gateway.pinata.cloud/ipfs/QmT8bDc6mba5H3bpAJrtDFBYnSTKLKoMFxhm6TmnMNHSnA".to_string(),
                 hash: circuit_hash!("calculate_payout"),
             })),
             None,
@@ -1042,7 +1042,7 @@ pub mod shuffle_protocol {
         init_comp_def(
             ctx.accounts,
             Some(CircuitSource::OffChain(OffChainCircuitSource {
-                source: "https://gateway.pinata.cloud/ipfs/QmVkRDkWHXXQWhUG4Z8Kj74FqwrHMJLqGZ3QSSkoG9JYmA".to_string(),
+                source: "https://gateway.pinata.cloud/ipfs/QmSfQjsdRAiXEU9b8qH2d1fgmyn1P7wcRCd28DE1e5Y3nC".to_string(),
                 hash: circuit_hash!("sub_balance"),
             })),
             None,
@@ -1246,7 +1246,7 @@ pub mod shuffle_protocol {
         init_comp_def(
             ctx.accounts,
             Some(CircuitSource::OffChain(OffChainCircuitSource {
-                source: "https://gateway.pinata.cloud/ipfs/QmRnC2vX4BD8jFvzjsvhgWBgVPQdMPYqdctoz2hQ6h8sVm".to_string(),
+                source: "https://gateway.pinata.cloud/ipfs/QmQAK9JvndSP3YePGq9ciSeuCk8boHfQy5xi3RZTHS9iDW".to_string(),
                 hash: circuit_hash!("transfer"),
             })),
             None,

@@ -1,11 +1,42 @@
 ```
 ███████╗██╗  ██╗██╗   ██╗███████╗███████╗██╗     ███████╗
 ██╔════╝██║  ██║██║   ██║██╔════╝██╔════╝██║     ██╔════╝
-███████╗███████║██║   ██║█████╗  █████╗  ██║     █████╗  
-╚════██║██╔══██║██║   ██║██╔══╝  ██╔══╝  ██║     ██╔══╝  
+███████╗███████║██║   ██║█████╗  █████╗  ██║     █████╗
+╚════██║██╔══██║██║   ██║██╔══╝  ██╔══╝  ██║     ██╔══╝
 ███████║██║  ██║╚██████╔╝██║     ██║     ███████╗███████╗
 ╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═╝     ╚═╝     ╚══════╝╚══════╝
 ```
+
+## 🌐 Try on Devnet (Easiest)
+
+Test Shuffle Protocol on Solana Devnet without any local setup.
+
+```bash
+# Install the CLI
+npm install -g @shuffle-protocol/sdk
+
+# Create your privacy account
+shuffle init
+
+# Get test USDC
+shuffle faucet 100
+
+# Shield tokens (deposit into privacy account)
+shuffle shield USDC 50
+
+# Check your balances
+shuffle balance
+
+# Place an encrypted order
+shuffle order TSLA_USDC buy 25
+
+# Check order status
+shuffle status
+```
+
+> **Note:** Devnet uses Arcium's public MPC cluster. Transactions may take 30-60 seconds for MPC callbacks.
+
+---
 
 ## 🛠️ Local Development Setup
 
@@ -13,14 +44,14 @@ Run Shuffle Protocol locally with Arcium MPC on a local Solana validator.
 
 ### Requirements
 
-| Tool | Version | Installation |
-|------|---------|--------------|
-| **Node.js** | v18+ | [nodejs.org](https://nodejs.org/) |
-| **Rust** | Latest | [rustup.rs](https://rustup.rs/) |
-| **Solana CLI** | v1.18+ | [docs.solana.com](https://docs.solana.com/cli/install-solana-cli-tools) |
-| **Anchor CLI** | v0.30+ | [anchor-lang.com](https://www.anchor-lang.com/docs/installation) |
-| **Arcium CLI** | v0.6+ | [docs.arcium.com](https://docs.arcium.com/getting-started/installation) |
-| **Docker** | Latest | [docker.com](https://docs.docker.com/get-docker/) |
+| Tool           | Version | Installation                                                            |
+| -------------- | ------- | ----------------------------------------------------------------------- |
+| **Node.js**    | v18+    | [nodejs.org](https://nodejs.org/)                                       |
+| **Rust**       | Latest  | [rustup.rs](https://rustup.rs/)                                         |
+| **Solana CLI** | v1.18+  | [docs.solana.com](https://docs.solana.com/cli/install-solana-cli-tools) |
+| **Anchor CLI** | v0.30+  | [anchor-lang.com](https://www.anchor-lang.com/docs/installation)        |
+| **Arcium CLI** | v0.6+   | [docs.arcium.com](https://docs.arcium.com/getting-started/installation) |
+| **Docker**     | Latest  | [docker.com](https://docs.docker.com/get-docker/)                       |
 
 ### Quick Start
 
@@ -88,6 +119,7 @@ shuffle order
 ```
 
 > **Multi-user testing:** Create additional users with `--user`:
+>
 > ```bash
 > shuffle --user alice airdrop 2   # Get SOL first
 > shuffle --user alice init
@@ -97,6 +129,7 @@ shuffle order
 > ```
 
 ---
+
 ## 🎯 The Problem
 
 **$1.5B+ extracted by MEV bots on Solana annually.** Every trade signals your intentions to the entire network. Bots frontrun you. Competitors see your accumulation strategy. Institutions can't place large orders without moving markets.
@@ -109,11 +142,11 @@ DeFi has a fundamental transparency problem.
 
 Shuffle is the **first protocol** to bridge Privacy 2.0 encrypted computation with public DEX liquidity.
 
-| Step | What Happens | Privacy |
-|------|--------------|---------|
-| **🛡️ Shield** | Deposit SPL tokens into encrypted balances | Only you can see your balance |
-| **🔄 Trade** | Place encrypted orders (pair, direction, amount all hidden) | Orders aggregate privately |
-| **💰 Settle** | Automatic pro-rata payouts on next interaction | Settlement amounts encrypted |
+| Step          | What Happens                                                | Privacy                       |
+| ------------- | ----------------------------------------------------------- | ----------------------------- |
+| **🛡️ Shield** | Deposit SPL tokens into encrypted balances                  | Only you can see your balance |
+| **🔄 Trade**  | Place encrypted orders (pair, direction, amount all hidden) | Orders aggregate privately    |
+| **💰 Settle** | Automatic pro-rata payouts on next interaction              | Settlement amounts encrypted  |
 
 **No tradeoffs.** Privacy AND best price via Jupiter's $4B+ liquidity.
 
@@ -126,26 +159,26 @@ flowchart TB
     subgraph User["👤 User"]
         Wallet["Wallet + x25519 Key"]
     end
-    
+
     subgraph SDK["📦 Shuffle SDK/CLI"]
         Encrypt["Encrypt orders locally"]
         Decrypt["Decrypt balances"]
     end
-    
+
     subgraph Solana["⛓️ Solana"]
         Program["Shuffle Program (Anchor)"]
         Vaults["SPL Token Vaults"]
     end
-    
+
     subgraph Arcium["🔐 Arcium MPC"]
         Circuits["8 Custom Circuits"]
     end
-    
+
     subgraph External["🌐 External"]
         Jupiter["Jupiter Aggregator"]
         Helius["Helius RPC + Cranker"]
     end
-    
+
     Wallet --> Encrypt --> Program
     Program <--> Circuits
     Program --> Vaults
@@ -155,6 +188,7 @@ flowchart TB
 ```
 
 For technical deep-dive, see:
+
 - [Privacy 2.0 Concept](docs/TECHNICAL_OVERVIEW.md#privacy-20-the-missing-piece)
 - [Omni-Batch Innovation](docs/TECHNICAL_OVERVIEW.md#technical-innovation-omni-batch)
 - [MPC Circuit Reference](docs/TECHNICAL_OVERVIEW.md#mpc-circuit-reference)
@@ -167,34 +201,35 @@ For technical deep-dive, see:
 
 We built **8 custom Arcis circuits** for on-chain encrypted computation:
 
-| Circuit | Purpose | Code |
-|---------|---------|------|
-| `add_balance` | Deposit to encrypted balance | [encrypted-ixs/src/lib.rs](contract/encrypted-ixs/src/lib.rs) |
-| `sub_balance` | Withdraw from encrypted balance | ↑ |
-| `transfer` | Atomic P2P transfer | ↑ |
-| `init_batch_state` | Create encrypted batch | ↑ |
-| `accumulate_order` | Add order to batch, deduct from user | ↑ |
-| `reveal_batch` | Decrypt aggregate totals for netting | ↑ |
-| `calculate_payout` | Pro-rata settlement computation | ↑ |
+| Circuit            | Purpose                              | Code                                                          |
+| ------------------ | ------------------------------------ | ------------------------------------------------------------- |
+| `add_balance`      | Deposit to encrypted balance         | [encrypted-ixs/src/lib.rs](contract/encrypted-ixs/src/lib.rs) |
+| `sub_balance`      | Withdraw from encrypted balance      | ↑                                                             |
+| `transfer`         | Atomic P2P transfer                  | ↑                                                             |
+| `init_batch_state` | Create encrypted batch               | ↑                                                             |
+| `accumulate_order` | Add order to batch, deduct from user | ↑                                                             |
+| `reveal_batch`     | Decrypt aggregate totals for netting | ↑                                                             |
+| `calculate_payout` | Pro-rata settlement computation      | ↑                                                             |
 
 **Key integration points:**
+
 - MXE encrypted shared state (`Enc<Shared, T>` and `Enc<Mxe, T>`)
 - Computation callbacks for async MPC results
 - x25519 key exchange for user-side decryption
 
 ### Helius Track — Infrastructure
 
-| Component | Integration |
-|-----------|-------------|
-| **RPC** | Devnet/Mainnet node access for all transactions |
+| Component   | Integration                                                              |
+| ----------- | ------------------------------------------------------------------------ |
+| **RPC**     | Devnet/Mainnet node access for all transactions                          |
 | **Cranker** | Automated batch trigger when thresholds met (≥8 orders, ≥2 active pairs) |
 
 ### Solana Ecosystem
 
-| Component | Integration |
-|-----------|-------------|
-| **Anchor 0.32** | Smart contract framework with PDAs |
-| **SPL Tokens** | 4 assets: USDC, TSLA, SPY, AAPL |
+| Component       | Integration                            |
+| --------------- | -------------------------------------- |
+| **Anchor 0.32** | Smart contract framework with PDAs     |
+| **SPL Tokens**  | 4 assets: USDC, TSLA, SPY, AAPL        |
 | **Jupiter CPI** | Net surplus routing for best execution |
 
 ---
@@ -204,7 +239,7 @@ We built **8 custom Arcis circuits** for on-chain encrypted computation:
 ### CLI Installation
 
 ```bash
-npm install -g @shuffle/cli
+npm install -g @shuffle-protocol/sdk
 ```
 
 ### Basic Usage
@@ -232,7 +267,12 @@ shuffle settle
 ### SDK Usage
 
 ```typescript
-import { ShuffleClient, AssetId, PairId, Direction } from "@shuffle/cli";
+import {
+  ShuffleClient,
+  AssetId,
+  PairId,
+  Direction,
+} from "@shuffle-protocol/sdk";
 
 // Initialize client
 const client = await ShuffleClient.create({ connection, wallet });
@@ -255,20 +295,21 @@ console.log("USDC:", balances.usdc);
 ## 🎬 Demo
 
 <!-- TODO: Add demo video link -->
+
 > 🎥 **Video Demo**: [[Link]](https://drive.google.com/file/d/1XJjiBkKVjA-4BHtwMCafhziieIOoUlX0/view)
 
 ---
 
 ## 🔒 What's Private vs Public
 
-| Data | Encrypted? | Who Can See |
-|------|------------|-------------|
-| User balances | ✅ Yes | User only (decrypts locally) |
-| Order pair/direction/amount | ✅ Yes | User only |
-| Settlement payouts | ✅ Yes | User only |
-| Account exists | ❌ No | Public |
-| Batch order count | ❌ No | Public |
-| Aggregate totals (post-batch) | ❌ No | Public |
+| Data                          | Encrypted? | Who Can See                  |
+| ----------------------------- | ---------- | ---------------------------- |
+| User balances                 | ✅ Yes     | User only (decrypts locally) |
+| Order pair/direction/amount   | ✅ Yes     | User only                    |
+| Settlement payouts            | ✅ Yes     | User only                    |
+| Account exists                | ❌ No      | Public                       |
+| Batch order count             | ❌ No      | Public                       |
+| Aggregate totals (post-batch) | ❌ No      | Public                       |
 
 We're surgical about privacy—see [Data Visibility Matrix](docs/TECHNICAL_OVERVIEW.md#encrypted-vs-non-encrypted-data).
 
@@ -276,10 +317,10 @@ We're surgical about privacy—see [Data Visibility Matrix](docs/TECHNICAL_OVERV
 
 ## 👥 Team
 
-|  |  |
-|--|--|
+|               |                                                                                                                                                    |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Bulldozer** | [@BulldozerFi](https://x.com/BulldozerFi) — DeFi developer with neobank clients, mainnet deployments securing user funds, cybersecurity background |
-| **Tothster** | [@itstothster](https://x.com/itstothster) — Experienced DeFi builder, mainnet dapps, cybersecurity foundations |
+| **Tothster**  | [@itstothster](https://x.com/itstothster) — Experienced DeFi builder, mainnet dapps, cybersecurity foundations                                     |
 
 Built in a single hackathon sprint. 🚀
 
@@ -298,7 +339,6 @@ sol-privacy-mvp/
 ├── faucet/                 # Test token faucet
 └── docs/                   # Technical documentation
 ```
-
 
 ---
 
