@@ -157,7 +157,7 @@ program
 // Devnet Utilities
 program
   .command("faucet <amount>")
-  .description("Mint devnet USDC to your wallet")
+  .description("Claim devnet USDC from the program faucet")
   .action(faucetCommand);
 
 program

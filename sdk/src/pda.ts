@@ -6,6 +6,7 @@ import {
   BATCH_ACCUMULATOR_SEED,
   BATCH_LOG_SEED,
   VAULT_SEED,
+  FAUCET_USDC_SEED,
 } from "./constants";
 
 export function getPoolPDA(programId: PublicKey): [PublicKey, number] {
@@ -51,6 +52,13 @@ export function getVaultPDA(
 ): [PublicKey, number] {
   return PublicKey.findProgramAddressSync(
     [Buffer.from(VAULT_SEED), Buffer.from(assetSeed)],
+    programId
+  );
+}
+
+export function getFaucetVaultPDA(programId: PublicKey): [PublicKey, number] {
+  return PublicKey.findProgramAddressSync(
+    [Buffer.from(FAUCET_USDC_SEED)],
     programId
   );
 }

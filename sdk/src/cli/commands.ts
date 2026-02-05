@@ -1204,7 +1204,7 @@ export async function statusCommand(): Promise<void> {
 // DEVNET COMMANDS
 // ============================================================================
 /**
- * shuffle faucet <amount> - Mint USDC to wallet
+ * shuffle faucet <amount> - Claim USDC from program faucet
  */
 export async function faucetCommand(amountStr: string): Promise<void> {
   const config = getConfig();
@@ -1224,7 +1224,7 @@ export async function faucetCommand(amountStr: string): Promise<void> {
 
     const progress = createProgressSpinner([
       "Connecting to USDC faucet...",
-      `Minting ${amount.toLocaleString()} USDC to your wallet...`,
+      `Claiming ${amount.toLocaleString()} USDC to your wallet...`,
       "Tokens received!",
     ]);
 
@@ -1247,7 +1247,7 @@ export async function faucetCommand(amountStr: string): Promise<void> {
     return;
   }
 
-  // Real mode - mint USDC via ShuffleClient
+  // Real mode - claim USDC via program faucet
   if (!config.shuffleClient) {
     printError("Not connected to Shuffle protocol");
     return;
@@ -1255,54 +1255,12 @@ export async function faucetCommand(amountStr: string): Promise<void> {
 
   try {
     const sig = await withSpinner(
-      `Minting ${amount.toLocaleString()} USDC to your wallet...`,
+      `Claiming ${amount.toLocaleString()} USDC to your wallet...`,
       async () => {
-        // Use the client's mintToWallet method if available, otherwise show helpful error
-        if (typeof (config.shuffleClient as any).mintUsdcToWallet === "function") {
-          return await (config.shuffleClient as any).mintUsdcToWallet(Math.floor(amount * 1_000_000));
+        if (typeof (config.shuffleClient as any).faucet !== "function") {
+          throw new Error("Faucet not supported by this SDK version.");
         }
-        
-        // Fallback: try to get mint and mint directly
-        const { mintTo, getOrCreateAssociatedTokenAccount } = await import("@solana/spl-token");
-        const { Keypair } = await import("@solana/web3.js");
-        const fs = await import("fs");
-        const path = await import("path");
-        const os = await import("os");
-        
-        const pool = await (config.shuffleClient as any).program.account.pool.fetch((config.shuffleClient as any).poolPDA);
-        const usdcMint = pool.usdcMint;
-        const connection = config.connection;
-        
-        // Load the DEFAULT keypair (has mint authority) instead of current user
-        const defaultKeypairPath = path.join(os.homedir(), ".config", "solana", "id.json");
-        if (!fs.existsSync(defaultKeypairPath)) {
-          throw new Error("Main wallet not found. Faucet requires default Solana keypair with mint authority.");
-        }
-        const defaultRaw = JSON.parse(fs.readFileSync(defaultKeypairPath, "utf-8"));
-        const mintAuthority = Keypair.fromSecretKey(Uint8Array.from(defaultRaw));
-        
-        // Current user's public key (where tokens will go)
-        const recipientPubkey = config.wallet.publicKey;
-        
-        // Get or create user's token account (use mint authority as payer since they have SOL)
-        const tokenAccount = await getOrCreateAssociatedTokenAccount(
-          connection,
-          mintAuthority,  // payer
-          usdcMint,
-          recipientPubkey  // owner (the current user profile)
-        );
-        
-        // Mint tokens using the mint authority
-        const mintSig = await mintTo(
-          connection,
-          mintAuthority,
-          usdcMint,
-          tokenAccount.address,
-          mintAuthority, // mint authority
-          Math.floor(amount * 1_000_000)
-        );
-        
-        return mintSig;
+        return await (config.shuffleClient as any).faucet(Math.floor(amount * 1_000_000));
       },
       `Received ${amount.toLocaleString()} USDC!`
     );
@@ -1310,12 +1268,15 @@ export async function faucetCommand(amountStr: string): Promise<void> {
     printTxSuccess(sig, config.network);
   } catch (e: any) {
     // Improve error messages
-    if (e.message?.includes("mint authority")) {
-      printError("Cannot mint: you don't have mint authority. Only works on localnet.");
+    const msg = e.message || "";
+    if (msg.includes("Account does not exist") || msg.includes("not found")) {
+      printError("Privacy account not found. Run 'shuffle init' first.");
+    } else if (msg.includes("Faucet limit exceeded") || msg.includes("FaucetLimitExceeded")) {
+      printError("Faucet limit exceeded. You can claim up to 1000 USDC total.");
     } else if (e.message?.includes("insufficient funds")) {
       printError("Insufficient SOL for transaction fees. Request an airdrop first with 'shuffle airdrop'.");
     } else {
-      printError(e.message || "Faucet failed");
+      printError(msg || "Faucet failed");
     }
   }
 }
@@ -1421,4 +1382,3 @@ export async function historyCommand(): Promise<void> {
     printError(e.message || "Failed to fetch batch history");
   }
 }
-

@@ -36,6 +36,7 @@ export const USER_SEED = "user";
 export const BATCH_ACCUMULATOR_SEED = "batch_accumulator";
 export const BATCH_LOG_SEED = "batch_log";
 export const VAULT_SEED = "vault";
+export const FAUCET_USDC_SEED = "faucet_usdc";
 
 // Per-asset vault sub-seeds
 export const VAULT_ASSET_SEEDS: Record<AssetId, string> = {

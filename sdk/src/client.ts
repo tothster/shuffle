@@ -1,7 +1,13 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
-import { PublicKey, SystemProgram } from "@solana/web3.js";
-import { TOKEN_PROGRAM_ID, getAssociatedTokenAddressSync, getAccount, TokenAccountNotFoundError } from "@solana/spl-token";
+import { PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
+import {
+  TOKEN_PROGRAM_ID,
+  getAssociatedTokenAddressSync,
+  getAccount,
+  TokenAccountNotFoundError,
+  createAssociatedTokenAccountInstruction,
+} from "@solana/spl-token";
 import {
   awaitComputationFinalization,
   getCompDefAccOffset,
@@ -22,6 +28,7 @@ import {
   getBatchAccumulatorPDA,
   getBatchLogPDA,
   getVaultPDA,
+  getFaucetVaultPDA,
 } from "./pda";
 import {
   fetchMXEPublicKey,
@@ -180,6 +187,57 @@ export class ShuffleClient {
     } catch {
       return false;
     }
+  }
+
+  // =========================================================================
+  // DEVNET / FAUCET METHODS
+  // =========================================================================
+
+  /**
+   * Claim USDC from the program faucet.
+   * @param amount Amount in base units (6 decimals).
+   */
+  async faucet(amount: number): Promise<string> {
+    const owner = this.wallet.publicKey;
+    const [userAccountPDA] = getUserAccountPDA(this.programId, owner);
+    const [faucetVaultPDA] = getFaucetVaultPDA(this.programId);
+
+    // Fetch pool to find the USDC mint
+    const pool = await (this.program.account as any).pool.fetch(this.poolPDA);
+    const usdcMint = pool.usdcMint as PublicKey;
+
+    // Ensure the user's USDC ATA exists (create if missing)
+    const userUsdcAccount = getAssociatedTokenAddressSync(usdcMint, owner);
+    try {
+      await getAccount(this.connection, userUsdcAccount);
+    } catch (e: any) {
+      if (e instanceof TokenAccountNotFoundError) {
+        const ix = createAssociatedTokenAccountInstruction(
+          owner, // payer
+          userUsdcAccount,
+          owner,
+          usdcMint
+        );
+        const tx = new Transaction().add(ix);
+        await this.provider.sendAndConfirm(tx, []);
+      } else {
+        throw e;
+      }
+    }
+
+    const sig = await this.program.methods
+      .faucet(new anchor.BN(amount))
+      .accounts({
+        user: owner,
+        userAccount: userAccountPDA,
+        userUsdcAccount,
+        pool: this.poolPDA,
+        faucetVault: faucetVaultPDA,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .rpc({ commitment: "confirmed" });
+
+    return sig;
   }
 
   // =========================================================================

@@ -27,6 +27,7 @@ export {
   BATCH_ACCUMULATOR_SEED,
   BATCH_LOG_SEED,
   VAULT_SEED,
+  FAUCET_USDC_SEED,
   VAULT_ASSET_SEEDS,
   ASSET_LABELS,
   PAIR_TOKENS,
@@ -39,6 +40,7 @@ export {
   getBatchAccumulatorPDA,
   getBatchLogPDA,
   getVaultPDA,
+  getFaucetVaultPDA,
 } from "./pda";
 
 // Encryption helpers
