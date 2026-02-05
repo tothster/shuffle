@@ -6,6 +6,7 @@
 
 import chalk from "chalk";
 import { PublicKey } from "@solana/web3.js";
+import { getAccount } from "@solana/spl-token";
 import { getConfig, CLIConfig } from "./config";
 import {
   withSpinner,
@@ -27,8 +28,30 @@ import {
   mockDelay,
   mockSignature,
   DEVNET_CONFIG,
+  LOCALNET_CONFIG,
 } from "./devnet";
+import { getFaucetVaultPDA } from "../pda";
 import { AssetId, PairId, Direction, ASSET_LABELS } from "../constants";
+
+function getErrorLogs(error: any): string[] {
+  if (!error) return [];
+  if (Array.isArray(error.logs)) return error.logs;
+  if (Array.isArray(error.transactionLogs)) return error.transactionLogs;
+  if (Array.isArray(error.data?.logs)) return error.data.logs;
+  return [];
+}
+
+function formatUsdc(amount: bigint): string {
+  const num = Number(amount) / 1_000_000;
+  if (num === 0) return "0.00";
+  if (num < 0.01) {
+    return num.toLocaleString("en-US", { minimumFractionDigits: 6, maximumFractionDigits: 6 });
+  }
+  if (num < 1) {
+    return num.toLocaleString("en-US", { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+  }
+  return num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
 
 // ============================================================================
 // ACCOUNT COMMANDS
@@ -133,13 +156,16 @@ export async function balanceCommand(): Promise<void> {
 
   try {
     // Fetch shielded, unshielded, and estimated payout (for lazy settlement)
-    const [shielded, unshielded, estimatedPayout] = await withSpinner(
+    const [shielded, unshielded, estimatedPayout, solBalance] = await withSpinner(
       "Fetching balances...",
       async () => {
-        const shieldedBalances = await config.shuffleClient!.getBalance();
-        const unshieldedBalances = await config.shuffleClient!.getUnshieldedBalances();
-        const payout = await config.shuffleClient!.estimatePayout();
-        return [shieldedBalances, unshieldedBalances, payout];
+        const [shieldedBalances, unshieldedBalances, payout, sol] = await Promise.all([
+          config.shuffleClient!.getBalance(),
+          config.shuffleClient!.getUnshieldedBalances(),
+          config.shuffleClient!.estimatePayout(),
+          config.connection.getBalance(config.wallet.publicKey),
+        ]);
+        return [shieldedBalances, unshieldedBalances, payout, sol];
       },
       "Balances loaded!"
     );
@@ -149,14 +175,22 @@ export async function balanceCommand(): Promise<void> {
       ? { amount: estimatedPayout.estimatedPayout, assetId: estimatedPayout.outputAssetId }
       : null;
     
-    printBalanceTable(shielded, unshielded, pendingPayout);
+    printBalanceTable(shielded, unshielded, pendingPayout, solBalance);
   } catch (e: any) {
     // If account doesn't exist, show only unshielded
     if (e.message?.includes("Account does not exist") || e.message?.includes("not found")) {
       try {
-        const unshielded = await config.shuffleClient!.getUnshieldedBalances();
+        const [unshielded, solBalance] = await Promise.all([
+          config.shuffleClient!.getUnshieldedBalances(),
+          config.connection.getBalance(config.wallet.publicKey),
+        ]);
         console.log(chalk.yellow("\n  ⚠ No shielded account. Run 'shuffle init' to create one.\n"));
-        printBalanceTable({ usdc: BigInt(0), tsla: BigInt(0), spy: BigInt(0), aapl: BigInt(0) }, unshielded);
+        printBalanceTable(
+          { usdc: BigInt(0), tsla: BigInt(0), spy: BigInt(0), aapl: BigInt(0) },
+          unshielded,
+          null,
+          solBalance
+        );
       } catch {
         printError("Privacy account not found. Run 'shuffle init' first.");
       }
@@ -1254,6 +1288,30 @@ export async function faucetCommand(amountStr: string): Promise<void> {
   }
 
   try {
+    // Preflight check: ensure faucet vault has enough USDC
+    try {
+      const programId = config.network === "localnet"
+        ? LOCALNET_CONFIG.programId
+        : DEVNET_CONFIG.programId;
+      const [faucetVaultPDA] = getFaucetVaultPDA(programId);
+      const faucetVault = await getAccount(config.connection, faucetVaultPDA);
+      if (faucetVault.amount < amountRaw) {
+        printError(
+          `Faucet vault has insufficient USDC (available: ${formatUsdc(faucetVault.amount)}). ` +
+          "Ask an admin to refill the faucet."
+        );
+        return;
+      }
+    } catch (e: any) {
+      // If the faucet vault isn't initialized or can't be fetched, surface a clear message
+      const msg = e?.message?.toLowerCase?.() || "";
+      if (msg.includes("failed to find account") || msg.includes("could not find account") || msg.includes("not found")) {
+        printError("Faucet vault is not initialized. Ask an admin to initialize and fund the faucet.");
+        return;
+      }
+      // Fall through to attempt faucet call; it may still succeed
+    }
+
     const sig = await withSpinner(
       `Claiming ${amount.toLocaleString()} USDC to your wallet...`,
       async () => {
@@ -1269,11 +1327,16 @@ export async function faucetCommand(amountStr: string): Promise<void> {
   } catch (e: any) {
     // Improve error messages
     const msg = e.message || "";
+    const logs = getErrorLogs(e);
+    const hasTokenInsufficient = logs.some((log) => log.toLowerCase().includes("error: insufficient funds"));
+
     if (msg.includes("Account does not exist") || msg.includes("not found")) {
       printError("Privacy account not found. Run 'shuffle init' first.");
     } else if (msg.includes("Faucet limit exceeded") || msg.includes("FaucetLimitExceeded")) {
       printError("Faucet limit exceeded. You can claim up to 1000 USDC total.");
-    } else if (e.message?.includes("insufficient funds")) {
+    } else if (hasTokenInsufficient) {
+      printError("Faucet vault has insufficient USDC. Try a smaller amount or ask an admin to refill the faucet.");
+    } else if (msg.toLowerCase().includes("insufficient funds") && (msg.toLowerCase().includes("fee") || msg.toLowerCase().includes("transaction"))) {
       printError("Insufficient SOL for transaction fees. Request an airdrop first with 'shuffle airdrop'.");
     } else {
       printError(msg || "Faucet failed");

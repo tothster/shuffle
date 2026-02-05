@@ -91,9 +91,27 @@ export function printHeader(title: string): void {
 export function printBalanceTable(
   shielded: { usdc: bigint; tsla: bigint; spy: bigint; aapl: bigint },
   unshielded?: { usdc: bigint; tsla: bigint; spy: bigint; aapl: bigint },
-  pendingPayout?: { amount: bigint; assetId: number } | null
+  pendingPayout?: { amount: bigint; assetId: number } | null,
+  solBalanceLamports?: number | bigint
 ): void {
   printHeader("Your Balances");
+
+  if (solBalanceLamports !== undefined) {
+    const sol = Number(solBalanceLamports) / 1_000_000_000;
+    let solDisplay: string;
+    if (sol === 0) {
+      solDisplay = "0.0000";
+    } else if (sol < 0.01) {
+      solDisplay = sol.toLocaleString("en-US", { minimumFractionDigits: 6, maximumFractionDigits: 6 });
+    } else if (sol < 1) {
+      solDisplay = sol.toLocaleString("en-US", { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+    } else {
+      solDisplay = sol.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    console.log(chalk.gray(`  SOL (wallet): ${chalk.white(solDisplay)} SOL`));
+    console.log();
+  }
   
   const format = (val: bigint) => {
     const num = Number(val) / 1_000_000; // 6 decimals
