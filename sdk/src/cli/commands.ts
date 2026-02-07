@@ -6,6 +6,7 @@
 
 import chalk from "chalk";
 import { PublicKey } from "@solana/web3.js";
+import { getAccount } from "@solana/spl-token";
 import { getConfig, CLIConfig } from "./config";
 import {
   withSpinner,
@@ -27,8 +28,30 @@ import {
   mockDelay,
   mockSignature,
   DEVNET_CONFIG,
+  LOCALNET_CONFIG,
 } from "./devnet";
+import { getFaucetVaultPDA } from "../pda";
 import { AssetId, PairId, Direction, ASSET_LABELS } from "../constants";
+
+function getErrorLogs(error: any): string[] {
+  if (!error) return [];
+  if (Array.isArray(error.logs)) return error.logs;
+  if (Array.isArray(error.transactionLogs)) return error.transactionLogs;
+  if (Array.isArray(error.data?.logs)) return error.data.logs;
+  return [];
+}
+
+function formatUsdc(amount: bigint): string {
+  const num = Number(amount) / 1_000_000;
+  if (num === 0) return "0.00";
+  if (num < 0.01) {
+    return num.toLocaleString("en-US", { minimumFractionDigits: 6, maximumFractionDigits: 6 });
+  }
+  if (num < 1) {
+    return num.toLocaleString("en-US", { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+  }
+  return num.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
 
 // ============================================================================
 // ACCOUNT COMMANDS
@@ -133,13 +156,16 @@ export async function balanceCommand(): Promise<void> {
 
   try {
     // Fetch shielded, unshielded, and estimated payout (for lazy settlement)
-    const [shielded, unshielded, estimatedPayout] = await withSpinner(
+    const [shielded, unshielded, estimatedPayout, solBalance] = await withSpinner(
       "Fetching balances...",
       async () => {
-        const shieldedBalances = await config.shuffleClient!.getBalance();
-        const unshieldedBalances = await config.shuffleClient!.getUnshieldedBalances();
-        const payout = await config.shuffleClient!.estimatePayout();
-        return [shieldedBalances, unshieldedBalances, payout];
+        const [shieldedBalances, unshieldedBalances, payout, sol] = await Promise.all([
+          config.shuffleClient!.getBalance(),
+          config.shuffleClient!.getUnshieldedBalances(),
+          config.shuffleClient!.estimatePayout(),
+          config.connection.getBalance(config.wallet.publicKey),
+        ]);
+        return [shieldedBalances, unshieldedBalances, payout, sol];
       },
       "Balances loaded!"
     );
@@ -149,14 +175,22 @@ export async function balanceCommand(): Promise<void> {
       ? { amount: estimatedPayout.estimatedPayout, assetId: estimatedPayout.outputAssetId }
       : null;
     
-    printBalanceTable(shielded, unshielded, pendingPayout);
+    printBalanceTable(shielded, unshielded, pendingPayout, solBalance);
   } catch (e: any) {
     // If account doesn't exist, show only unshielded
     if (e.message?.includes("Account does not exist") || e.message?.includes("not found")) {
       try {
-        const unshielded = await config.shuffleClient!.getUnshieldedBalances();
+        const [unshielded, solBalance] = await Promise.all([
+          config.shuffleClient!.getUnshieldedBalances(),
+          config.connection.getBalance(config.wallet.publicKey),
+        ]);
         console.log(chalk.yellow("\n  ⚠ No shielded account. Run 'shuffle init' to create one.\n"));
-        printBalanceTable({ usdc: BigInt(0), tsla: BigInt(0), spy: BigInt(0), aapl: BigInt(0) }, unshielded);
+        printBalanceTable(
+          { usdc: BigInt(0), tsla: BigInt(0), spy: BigInt(0), aapl: BigInt(0) },
+          unshielded,
+          null,
+          solBalance
+        );
       } catch {
         printError("Privacy account not found. Run 'shuffle init' first.");
       }
@@ -1204,7 +1238,7 @@ export async function statusCommand(): Promise<void> {
 // DEVNET COMMANDS
 // ============================================================================
 /**
- * shuffle faucet <amount> - Mint USDC to wallet
+ * shuffle faucet <amount> - Claim USDC from program faucet (also airdrops 1 SOL for fees)
  */
 export async function faucetCommand(amountStr: string): Promise<void> {
   const config = getConfig();
@@ -1223,12 +1257,15 @@ export async function faucetCommand(amountStr: string): Promise<void> {
     const state = getMockState();
 
     const progress = createProgressSpinner([
+      "Requesting 1 SOL for transaction fees...",
       "Connecting to USDC faucet...",
-      `Minting ${amount.toLocaleString()} USDC to your wallet...`,
+      `Claiming ${amount.toLocaleString()} USDC to your wallet...`,
       "Tokens received!",
     ]);
 
     progress.start();
+    await mockDelay("fast");
+    progress.nextStep();
     await mockDelay("fast");
     progress.nextStep();
     await mockDelay("medium");
@@ -1241,68 +1278,103 @@ export async function faucetCommand(amountStr: string): Promise<void> {
       updateMockState({ balances: state.balances });
     }
 
-    progress.succeed(`Received ${amount.toLocaleString()} USDC!`);
+    progress.succeed(`Received 1 SOL + ${amount.toLocaleString()} USDC!`);
     console.log(chalk.gray(`  Token: ${DEVNET_CONFIG.mints.USDC.toBase58().slice(0, 20)}...`));
     printTxSuccess(mockSignature(), config.network);
     return;
   }
 
-  // Real mode - mint USDC via ShuffleClient
+  // Real mode - first airdrop SOL, then claim USDC via program faucet
   if (!config.shuffleClient) {
     printError("Not connected to Shuffle protocol");
     return;
   }
 
   try {
+    // Step 1: Airdrop 1 SOL for transaction fees (only on devnet/localnet)
+    const pubkey = config.wallet.publicKey;
+    let currentBalance = await config.connection.getBalance(pubkey);
+    const minBalance = 0.1 * 1_000_000_000; // 0.1 SOL minimum
+    const minBalanceForTx = 0.005 * 1_000_000_000; // 0.005 SOL absolute minimum for transaction
+    
+    if (currentBalance < minBalance) {
+      console.log(chalk.gray(`\n  💰 Requesting 1 SOL for transaction fees...`));
+      try {
+        const airdropSig = await config.connection.requestAirdrop(
+          pubkey,
+          1_000_000_000 // 1 SOL
+        );
+        await config.connection.confirmTransaction(airdropSig, "confirmed");
+        console.log(chalk.green(`  ✓ Received 1 SOL`));
+        
+        // Refresh balance after successful airdrop
+        currentBalance = await config.connection.getBalance(pubkey);
+
+      } catch (airdropError: any) {
+        // Non-fatal: warn but continue with USDC faucet
+        const msg = airdropError.message || "";
+        
+        if (msg.includes("429") || msg.includes("airdrop limit") || msg.includes("Too Many Requests")) {
+          // Rate limited - show helpful guide
+          console.log(chalk.yellow(`\n  ⚠ Airdrop rate limit reached. Get SOL manually:\n`));
+          console.log(chalk.cyan(`  📍 Visit: ${chalk.white.bold("https://faucet.solana.com")}`));
+          console.log(chalk.gray(`  1. Paste your wallet address: ${chalk.white(pubkey.toBase58())}`));
+          console.log(chalk.gray(`  2. Request ${chalk.white("0.5 SOL")} (minimum recommended)`));
+          console.log(chalk.gray(`  3. Complete the CAPTCHA\n`));
+        } else {
+          console.log(chalk.yellow(`  ⚠ SOL airdrop failed: ${msg}`));
+        }
+      }
+    } else {
+      console.log(chalk.gray(`\n  ✓ Sufficient SOL balance (${(currentBalance / 1_000_000_000).toFixed(4)} SOL)`));
+    }
+
+    // Check if we have enough SOL for the transaction after airdrop attempt
+    if (currentBalance < minBalanceForTx) {
+      console.log();
+      printError(`Insufficient SOL for transaction fees (${(currentBalance / 1_000_000_000).toFixed(4)} SOL).`);
+      console.log(chalk.yellow(`\n  You need at least 0.005 SOL to claim USDC from the faucet.`));
+      console.log(chalk.cyan(`  📍 Get SOL from: ${chalk.white.bold("https://faucet.solana.com")}`));
+      console.log(chalk.gray(`  1. Paste your wallet: ${chalk.white(pubkey.toBase58())}`));
+      console.log(chalk.gray(`  2. Request ${chalk.white("0.5 SOL")}`));
+      console.log(chalk.gray(`  3. Then run: ${chalk.white("shuffle faucet " + amountStr)}\n`));
+      return;
+    }
+
+
+
+    // Step 2: Preflight check - ensure faucet vault has enough USDC
+    try {
+      const programId = config.network === "localnet"
+        ? LOCALNET_CONFIG.programId
+        : DEVNET_CONFIG.programId;
+      const [faucetVaultPDA] = getFaucetVaultPDA(programId);
+      const faucetVault = await getAccount(config.connection, faucetVaultPDA);
+      if (faucetVault.amount < amountRaw) {
+        printError(
+          `Faucet vault has insufficient USDC (available: ${formatUsdc(faucetVault.amount)}). ` +
+          "Ask an admin to refill the faucet."
+        );
+        return;
+      }
+    } catch (e: any) {
+      // If the faucet vault isn't initialized or can't be fetched, surface a clear message
+      const msg = e?.message?.toLowerCase?.() || "";
+      if (msg.includes("failed to find account") || msg.includes("could not find account") || msg.includes("not found")) {
+        printError("Faucet vault is not initialized. Ask an admin to initialize and fund the faucet.");
+        return;
+      }
+      // Fall through to attempt faucet call; it may still succeed
+    }
+
+    // Step 3: Claim USDC from faucet
     const sig = await withSpinner(
-      `Minting ${amount.toLocaleString()} USDC to your wallet...`,
+      `Claiming ${amount.toLocaleString()} USDC to your wallet...`,
       async () => {
-        // Use the client's mintToWallet method if available, otherwise show helpful error
-        if (typeof (config.shuffleClient as any).mintUsdcToWallet === "function") {
-          return await (config.shuffleClient as any).mintUsdcToWallet(Math.floor(amount * 1_000_000));
+        if (typeof (config.shuffleClient as any).faucet !== "function") {
+          throw new Error("Faucet not supported by this SDK version.");
         }
-        
-        // Fallback: try to get mint and mint directly
-        const { mintTo, getOrCreateAssociatedTokenAccount } = await import("@solana/spl-token");
-        const { Keypair } = await import("@solana/web3.js");
-        const fs = await import("fs");
-        const path = await import("path");
-        const os = await import("os");
-        
-        const pool = await (config.shuffleClient as any).program.account.pool.fetch((config.shuffleClient as any).poolPDA);
-        const usdcMint = pool.usdcMint;
-        const connection = config.connection;
-        
-        // Load the DEFAULT keypair (has mint authority) instead of current user
-        const defaultKeypairPath = path.join(os.homedir(), ".config", "solana", "id.json");
-        if (!fs.existsSync(defaultKeypairPath)) {
-          throw new Error("Main wallet not found. Faucet requires default Solana keypair with mint authority.");
-        }
-        const defaultRaw = JSON.parse(fs.readFileSync(defaultKeypairPath, "utf-8"));
-        const mintAuthority = Keypair.fromSecretKey(Uint8Array.from(defaultRaw));
-        
-        // Current user's public key (where tokens will go)
-        const recipientPubkey = config.wallet.publicKey;
-        
-        // Get or create user's token account (use mint authority as payer since they have SOL)
-        const tokenAccount = await getOrCreateAssociatedTokenAccount(
-          connection,
-          mintAuthority,  // payer
-          usdcMint,
-          recipientPubkey  // owner (the current user profile)
-        );
-        
-        // Mint tokens using the mint authority
-        const mintSig = await mintTo(
-          connection,
-          mintAuthority,
-          usdcMint,
-          tokenAccount.address,
-          mintAuthority, // mint authority
-          Math.floor(amount * 1_000_000)
-        );
-        
-        return mintSig;
+        return await (config.shuffleClient as any).faucet(Math.floor(amount * 1_000_000));
       },
       `Received ${amount.toLocaleString()} USDC!`
     );
@@ -1310,12 +1382,20 @@ export async function faucetCommand(amountStr: string): Promise<void> {
     printTxSuccess(sig, config.network);
   } catch (e: any) {
     // Improve error messages
-    if (e.message?.includes("mint authority")) {
-      printError("Cannot mint: you don't have mint authority. Only works on localnet.");
-    } else if (e.message?.includes("insufficient funds")) {
-      printError("Insufficient SOL for transaction fees. Request an airdrop first with 'shuffle airdrop'.");
+    const msg = e.message || "";
+    const logs = getErrorLogs(e);
+    const hasTokenInsufficient = logs.some((log) => log.toLowerCase().includes("error: insufficient funds"));
+
+    if (msg.includes("Account does not exist") || msg.includes("not found")) {
+      printError("Privacy account not found. Run 'shuffle init' first.");
+    } else if (msg.includes("Faucet limit exceeded") || msg.includes("FaucetLimitExceeded")) {
+      printError("Faucet limit exceeded. You can claim up to 1000 USDC total.");
+    } else if (hasTokenInsufficient) {
+      printError("Faucet vault has insufficient USDC. Try a smaller amount or ask an admin to refill the faucet.");
+    } else if (msg.toLowerCase().includes("insufficient funds") && (msg.toLowerCase().includes("fee") || msg.toLowerCase().includes("transaction"))) {
+      printError("Insufficient SOL for transaction fees. This shouldn't happen - please report this issue.");
     } else {
-      printError(e.message || "Faucet failed");
+      printError(msg || "Faucet failed");
     }
   }
 }
@@ -1421,4 +1501,3 @@ export async function historyCommand(): Promise<void> {
     printError(e.message || "Failed to fetch batch history");
   }
 }
-

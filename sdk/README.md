@@ -22,33 +22,21 @@ npm install -g @shuffle-protocol/sdk
 
    # Configure for devnet
    solana config set --url devnet
-
-   # Get devnet SOL
-   solana airdrop 2
    ```
 
-### Commands
+### Get Started (Devnet)
 
 ```bash
-# Create your privacy account
+# 1. Create your privacy account
 shuffle init
 
-# View encrypted balances
-shuffle balance
-
-# Get test tokens (devnet)
+# 2. Get test tokens (also airdrops 1 SOL for fees)
 shuffle faucet 10000
 
-# Deposit into privacy account
-shuffle deposit USDC 1000
+# 3. Deposit into privacy account
+shuffle shield USDC 1000
 
-# Withdraw from privacy account
-shuffle withdraw USDC 500
-
-# Private transfer to another user
-shuffle transfer <solana-address> 100
-
-# Place encrypted order
+# 4. Place encrypted order
 shuffle order TSLA_USDC buy 500
 
 # Check status
@@ -56,6 +44,22 @@ shuffle status
 
 # Settle order after batch execution
 shuffle settle
+```
+
+### Other Commands
+
+```bash
+# View encrypted balances
+shuffle balance
+
+# Withdraw from privacy account
+shuffle unshield USDC 500
+
+# Private transfer to another user
+shuffle transfer <solana-address> 100
+
+# Get more SOL if needed
+shuffle airdrop 2
 ```
 
 ## 📦 SDK Usage

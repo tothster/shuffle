@@ -33,6 +33,8 @@ import {
   getExecutingPoolAccAddress,
   getComputationAccAddress,
   getClusterAccAddress,
+  getLookupTableAddress,
+  getArciumProgram,
   x25519,
 } from "@arcium-hq/client";
 import {
@@ -109,12 +111,23 @@ async function initCompDef(
   }
 
   console.log(`  Initializing ${circuitName} comp def...`);
+
+  // Get LUT address for v0.7.0
+  const arciumProgram = getArciumProgram(provider);
+  const mxeAccount = getMXEAccAddress(program.programId);
+  const mxeAcc = await arciumProgram.account.mxeAccount.fetch(mxeAccount);
+  const lutAddress = getLookupTableAddress(
+    program.programId,
+    mxeAcc.lutOffsetSlot
+  );
+
   await retryWithBackoff(async () => {
     await (program.methods as any)[methodName]()
       .accounts({
         compDefAccount: compDefPDA,
         payer: owner.publicKey,
-        mxeAccount: getMXEAccAddress(program.programId),
+        mxeAccount,
+        addressLookupTable: lutAddress,
       })
       .signers([owner])
       .rpc({ commitment: "confirmed" });

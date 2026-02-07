@@ -1,7 +1,7 @@
 import { PublicKey } from "@solana/web3.js";
 
-// Program ID (same for localnet and devnet)
-export const PROGRAM_ID = new PublicKey("CPaXkQZsWgJ47abuwAoCX61cSu5CZHSB4P4ETd3Rc5xU");
+// Program ID (localnet default, use DEVNET_CONFIG for devnet)
+export const PROGRAM_ID = new PublicKey("DQ29rUToHVTyp2QxP3C7nt1MuYp6p6PKYNaDpGooPAFq");
 
 // Asset IDs matching contract/programs/shuffle_protocol/src/constants.rs
 export enum AssetId {
@@ -36,6 +36,7 @@ export const USER_SEED = "user";
 export const BATCH_ACCUMULATOR_SEED = "batch_accumulator";
 export const BATCH_LOG_SEED = "batch_log";
 export const VAULT_SEED = "vault";
+export const FAUCET_USDC_SEED = "faucet_usdc";
 
 // Per-asset vault sub-seeds
 export const VAULT_ASSET_SEEDS: Record<AssetId, string> = {
