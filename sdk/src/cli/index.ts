@@ -157,8 +157,9 @@ program
 // Devnet Utilities
 program
   .command("faucet <amount>")
-  .description("Claim devnet USDC from the program faucet")
+  .description("Claim devnet USDC (also airdrops 1 SOL for transaction fees)")
   .action(faucetCommand);
+
 
 program
   .command("airdrop [amount]")

@@ -1238,7 +1238,7 @@ export async function statusCommand(): Promise<void> {
 // DEVNET COMMANDS
 // ============================================================================
 /**
- * shuffle faucet <amount> - Claim USDC from program faucet
+ * shuffle faucet <amount> - Claim USDC from program faucet (also airdrops 1 SOL for fees)
  */
 export async function faucetCommand(amountStr: string): Promise<void> {
   const config = getConfig();
@@ -1257,12 +1257,15 @@ export async function faucetCommand(amountStr: string): Promise<void> {
     const state = getMockState();
 
     const progress = createProgressSpinner([
+      "Requesting 1 SOL for transaction fees...",
       "Connecting to USDC faucet...",
       `Claiming ${amount.toLocaleString()} USDC to your wallet...`,
       "Tokens received!",
     ]);
 
     progress.start();
+    await mockDelay("fast");
+    progress.nextStep();
     await mockDelay("fast");
     progress.nextStep();
     await mockDelay("medium");
@@ -1275,20 +1278,72 @@ export async function faucetCommand(amountStr: string): Promise<void> {
       updateMockState({ balances: state.balances });
     }
 
-    progress.succeed(`Received ${amount.toLocaleString()} USDC!`);
+    progress.succeed(`Received 1 SOL + ${amount.toLocaleString()} USDC!`);
     console.log(chalk.gray(`  Token: ${DEVNET_CONFIG.mints.USDC.toBase58().slice(0, 20)}...`));
     printTxSuccess(mockSignature(), config.network);
     return;
   }
 
-  // Real mode - claim USDC via program faucet
+  // Real mode - first airdrop SOL, then claim USDC via program faucet
   if (!config.shuffleClient) {
     printError("Not connected to Shuffle protocol");
     return;
   }
 
   try {
-    // Preflight check: ensure faucet vault has enough USDC
+    // Step 1: Airdrop 1 SOL for transaction fees (only on devnet/localnet)
+    const pubkey = config.wallet.publicKey;
+    let currentBalance = await config.connection.getBalance(pubkey);
+    const minBalance = 0.1 * 1_000_000_000; // 0.1 SOL minimum
+    const minBalanceForTx = 0.005 * 1_000_000_000; // 0.005 SOL absolute minimum for transaction
+    
+    if (currentBalance < minBalance) {
+      console.log(chalk.gray(`\n  💰 Requesting 1 SOL for transaction fees...`));
+      try {
+        const airdropSig = await config.connection.requestAirdrop(
+          pubkey,
+          1_000_000_000 // 1 SOL
+        );
+        await config.connection.confirmTransaction(airdropSig, "confirmed");
+        console.log(chalk.green(`  ✓ Received 1 SOL`));
+        
+        // Refresh balance after successful airdrop
+        currentBalance = await config.connection.getBalance(pubkey);
+
+      } catch (airdropError: any) {
+        // Non-fatal: warn but continue with USDC faucet
+        const msg = airdropError.message || "";
+        
+        if (msg.includes("429") || msg.includes("airdrop limit") || msg.includes("Too Many Requests")) {
+          // Rate limited - show helpful guide
+          console.log(chalk.yellow(`\n  ⚠ Airdrop rate limit reached. Get SOL manually:\n`));
+          console.log(chalk.cyan(`  📍 Visit: ${chalk.white.bold("https://faucet.solana.com")}`));
+          console.log(chalk.gray(`  1. Paste your wallet address: ${chalk.white(pubkey.toBase58())}`));
+          console.log(chalk.gray(`  2. Request ${chalk.white("0.5 SOL")} (minimum recommended)`));
+          console.log(chalk.gray(`  3. Complete the CAPTCHA\n`));
+        } else {
+          console.log(chalk.yellow(`  ⚠ SOL airdrop failed: ${msg}`));
+        }
+      }
+    } else {
+      console.log(chalk.gray(`\n  ✓ Sufficient SOL balance (${(currentBalance / 1_000_000_000).toFixed(4)} SOL)`));
+    }
+
+    // Check if we have enough SOL for the transaction after airdrop attempt
+    if (currentBalance < minBalanceForTx) {
+      console.log();
+      printError(`Insufficient SOL for transaction fees (${(currentBalance / 1_000_000_000).toFixed(4)} SOL).`);
+      console.log(chalk.yellow(`\n  You need at least 0.005 SOL to claim USDC from the faucet.`));
+      console.log(chalk.cyan(`  📍 Get SOL from: ${chalk.white.bold("https://faucet.solana.com")}`));
+      console.log(chalk.gray(`  1. Paste your wallet: ${chalk.white(pubkey.toBase58())}`));
+      console.log(chalk.gray(`  2. Request ${chalk.white("0.5 SOL")}`));
+      console.log(chalk.gray(`  3. Then run: ${chalk.white("shuffle faucet " + amountStr)}\n`));
+      return;
+    }
+
+
+
+    // Step 2: Preflight check - ensure faucet vault has enough USDC
     try {
       const programId = config.network === "localnet"
         ? LOCALNET_CONFIG.programId
@@ -1312,6 +1367,7 @@ export async function faucetCommand(amountStr: string): Promise<void> {
       // Fall through to attempt faucet call; it may still succeed
     }
 
+    // Step 3: Claim USDC from faucet
     const sig = await withSpinner(
       `Claiming ${amount.toLocaleString()} USDC to your wallet...`,
       async () => {
@@ -1337,7 +1393,7 @@ export async function faucetCommand(amountStr: string): Promise<void> {
     } else if (hasTokenInsufficient) {
       printError("Faucet vault has insufficient USDC. Try a smaller amount or ask an admin to refill the faucet.");
     } else if (msg.toLowerCase().includes("insufficient funds") && (msg.toLowerCase().includes("fee") || msg.toLowerCase().includes("transaction"))) {
-      printError("Insufficient SOL for transaction fees. Request an airdrop first with 'shuffle airdrop'.");
+      printError("Insufficient SOL for transaction fees. This shouldn't happen - please report this issue.");
     } else {
       printError(msg || "Faucet failed");
     }
