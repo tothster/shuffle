@@ -1011,15 +1011,7 @@ pub mod shuffle_protocol {
             &ctx.accounts.computation_account,
         ) {
             Ok(AddBalanceOutput { field_0 }) => field_0,
-            Err(e) => {
-                msg!("add_balance_callback verify_output failed: {:?}", e);
-                msg!(
-                    "add_balance_callback context: user_account={}, computation_account={}",
-                    ctx.accounts.user_account.key(),
-                    ctx.accounts.computation_account.key()
-                );
-                return Err(ErrorCode::AbortedComputation.into());
-            }
+            Err(_) => return Err(ErrorCode::AbortedComputation.into()),
         };
 
         // Update the correct asset balance and nonce using pending_asset_id set during add_balance
