@@ -49,7 +49,7 @@ pub fn init_accumulate_order_comp_def(ctx: Context<InitAccumulateOrderCompDef>) 
     init_comp_def(
         ctx.accounts,
         Some(CircuitSource::OffChain(OffChainCircuitSource {
-            source: "https://gateway.pinata.cloud/ipfs/QmRZSmM1Bpka28fAXxevphFY5JnSRKsSotSu2oHepdwhKU".to_string(),
+            source: "https://gateway.pinata.cloud/ipfs/QmbgiSK9qUxVB9SWK21wQxNyMF9bhMzCM9CJLbVsGRAhWx".to_string(),
             hash: circuit_hash!("accumulate_order"),
         })),
         None,

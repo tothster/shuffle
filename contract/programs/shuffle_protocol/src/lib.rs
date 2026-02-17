@@ -45,7 +45,7 @@ const COMP_DEF_OFFSET_CALCULATE_PAYOUT: u32 = comp_def_offset("calculate_payout"
 // This is the unique address of our deployed program on Solana.
 //
 
-declare_id!("DzcqvoBihEcbyd1cXZwro3A6SWHJn7LccaNXcnHD8Pr1");
+declare_id!("3tZMV8JhXCaVz4p8q4xgLU7RefdP438AmohAjjMWL8wH");
 
 // Shuffle Protocol - A privacy-preserving DeFi protocol for private DCA into tokenized stocks
 //
@@ -755,7 +755,7 @@ pub mod shuffle_protocol {
         init_comp_def(
             ctx.accounts,
             Some(CircuitSource::OffChain(OffChainCircuitSource {
-                source: "https://gateway.pinata.cloud/ipfs/QmRZSmM1Bpka28fAXxevphFY5JnSRKsSotSu2oHepdwhKU".to_string(),
+                source: "https://gateway.pinata.cloud/ipfs/QmbgiSK9qUxVB9SWK21wQxNyMF9bhMzCM9CJLbVsGRAhWx".to_string(),
                 hash: circuit_hash!("accumulate_order"),
             })),
             None,
@@ -2651,17 +2651,6 @@ pub struct ExecuteBatch<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
 
-    /// Caller triggering batch execution (can be anyone now - permissionless)
-    /// NOTE: In production, you may want to add incentives for the executor
-    pub caller: Signer<'info>,
-
-    /// Pool account for operator verification
-    #[account(
-        seeds = [POOL_SEED],
-        bump = pool.bump,
-    )]
-    pub pool: Box<Account<'info, Pool>>,
-
     /// Batch accumulator to read state from
     #[account(
         mut,
@@ -2737,76 +2726,6 @@ pub struct ExecuteBatch<'info> {
         address = ARCIUM_CLOCK_ACCOUNT_ADDRESS
     )]
     pub clock_account: Box<Account<'info, ClockAccount>>,
-
-    // =========================================================================
-    // VAULT & RESERVE ACCOUNTS (for token transfers in callback)
-    // =========================================================================
-    /// USDC vault (user deposits)
-    #[account(
-        mut,
-        seeds = [VAULT_SEED, VAULT_USDC_SEED],
-        bump,
-    )]
-    pub vault_usdc: Box<Account<'info, TokenAccount>>,
-
-    /// TSLA vault
-    #[account(
-        mut,
-        seeds = [VAULT_SEED, VAULT_TSLA_SEED],
-        bump,
-    )]
-    pub vault_tsla: Box<Account<'info, TokenAccount>>,
-
-    /// SPY vault
-    #[account(
-        mut,
-        seeds = [VAULT_SEED, VAULT_SPY_SEED],
-        bump,
-    )]
-    pub vault_spy: Box<Account<'info, TokenAccount>>,
-
-    /// AAPL vault
-    #[account(
-        mut,
-        seeds = [VAULT_SEED, VAULT_AAPL_SEED],
-        bump,
-    )]
-    pub vault_aapl: Box<Account<'info, TokenAccount>>,
-
-    /// USDC reserve (protocol liquidity)
-    #[account(
-        mut,
-        seeds = [RESERVE_SEED, RESERVE_USDC_SEED],
-        bump,
-    )]
-    pub reserve_usdc: Box<Account<'info, TokenAccount>>,
-
-    /// TSLA reserve
-    #[account(
-        mut,
-        seeds = [RESERVE_SEED, RESERVE_TSLA_SEED],
-        bump,
-    )]
-    pub reserve_tsla: Box<Account<'info, TokenAccount>>,
-
-    /// SPY reserve
-    #[account(
-        mut,
-        seeds = [RESERVE_SEED, RESERVE_SPY_SEED],
-        bump,
-    )]
-    pub reserve_spy: Box<Account<'info, TokenAccount>>,
-
-    /// AAPL reserve
-    #[account(
-        mut,
-        seeds = [RESERVE_SEED, RESERVE_AAPL_SEED],
-        bump,
-    )]
-    pub reserve_aapl: Box<Account<'info, TokenAccount>>,
-
-    /// Token program for transfers
-    pub token_program: Program<'info, Token>,
 
     pub system_program: Program<'info, System>,
     pub arcium_program: Program<'info, Arcium>,

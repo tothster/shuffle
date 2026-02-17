@@ -598,30 +598,6 @@ export class ShuffleClient {
 
     const batchId = batch.batchId;
     const [batchLogPDA] = getBatchLogPDA(this.programId, batchId);
-    
-    // Derive vault PDAs
-    const [vaultUsdcPDA] = getVaultPDA(this.programId, "usdc");
-    const [vaultTslaPDA] = getVaultPDA(this.programId, "tsla");
-    const [vaultSpyPDA] = getVaultPDA(this.programId, "spy");
-    const [vaultAaplPDA] = getVaultPDA(this.programId, "aapl");
-
-    // Derive reserve PDAs
-    const [reserveUsdcPDA] = PublicKey.findProgramAddressSync(
-      [Buffer.from("reserve"), Buffer.from("usdc")],
-      this.programId
-    );
-    const [reserveTslaPDA] = PublicKey.findProgramAddressSync(
-      [Buffer.from("reserve"), Buffer.from("tsla")],
-      this.programId
-    );
-    const [reserveSpyPDA] = PublicKey.findProgramAddressSync(
-      [Buffer.from("reserve"), Buffer.from("spy")],
-      this.programId
-    );
-    const [reserveAaplPDA] = PublicKey.findProgramAddressSync(
-      [Buffer.from("reserve"), Buffer.from("aapl")],
-      this.programId
-    );
 
     const computationOffset = this._generateComputationOffset();
     const owner = this.wallet.publicKey;
@@ -630,22 +606,8 @@ export class ShuffleClient {
       .executeBatch(computationOffset)
       .accountsPartial({
         payer: owner,
-        caller: owner,
-        pool: this.poolPDA,
         batchAccumulator: this.batchAccumulatorPDA,
         batchLog: batchLogPDA,
-        // Vault accounts
-        vaultUsdc: vaultUsdcPDA,
-        vaultTsla: vaultTslaPDA,
-        vaultSpy: vaultSpyPDA,
-        vaultAapl: vaultAaplPDA,
-        // Reserve accounts
-        reserveUsdc: reserveUsdcPDA,
-        reserveTsla: reserveTslaPDA,
-        reserveSpy: reserveSpyPDA,
-        reserveAapl: reserveAaplPDA,
-        // Token program
-        tokenProgram: TOKEN_PROGRAM_ID,
         // Arcium accounts
         ...this._getArciumAccounts("reveal_batch", computationOffset),
       })

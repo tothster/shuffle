@@ -23,7 +23,7 @@ import * as os from "os";
 // =============================================================================
 
 // Program ID from arcium test output - UPDATE THIS when network restarts
-const LOCALNET_PROGRAM_ID = new PublicKey("BzaakuSahkVtEXKqZnD9tSPBoiJCMLa1nzQHUjtY1xRM");
+const LOCALNET_PROGRAM_ID = new PublicKey("3tZMV8JhXCaVz4p8q4xgLU7RefdP438AmohAjjMWL8wH");
 const RPC_URL = "http://127.0.0.1:8899";
 
 // Load local wallet

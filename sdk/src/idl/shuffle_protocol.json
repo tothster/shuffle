@@ -1,5 +1,5 @@
 {
-  "address": "BzaakuSahkVtEXKqZnD9tSPBoiJCMLa1nzQHUjtY1xRM",
+  "address": "3tZMV8JhXCaVz4p8q4xgLU7RefdP438AmohAjjMWL8wH",
   "metadata": {
     "name": "shuffle_protocol",
     "version": "0.1.0",
@@ -839,33 +839,6 @@
           "signer": true
         },
         {
-          "name": "caller",
-          "docs": [
-            "Caller triggering batch execution (can be anyone now - permissionless)",
-            "NOTE: In production, you may want to add incentives for the executor"
-          ],
-          "signer": true
-        },
-        {
-          "name": "pool",
-          "docs": [
-            "Pool account for operator verification"
-          ],
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  112,
-                  111,
-                  111,
-                  108
-                ]
-              }
-            ]
-          }
-        },
-        {
           "name": "batch_accumulator",
           "docs": [
             "Batch accumulator to read state from"
@@ -991,259 +964,6 @@
           "name": "clock_account",
           "writable": true,
           "address": "7EbMUTLo5DjdzbN7s8BXeZwXzEwNQb1hScfRvWg8a6ot"
-        },
-        {
-          "name": "vault_usdc",
-          "docs": [
-            "USDC vault (user deposits)"
-          ],
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
-              },
-              {
-                "kind": "const",
-                "value": [
-                  117,
-                  115,
-                  100,
-                  99
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "vault_tsla",
-          "docs": [
-            "TSLA vault"
-          ],
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
-              },
-              {
-                "kind": "const",
-                "value": [
-                  116,
-                  115,
-                  108,
-                  97
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "vault_spy",
-          "docs": [
-            "SPY vault"
-          ],
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
-              },
-              {
-                "kind": "const",
-                "value": [
-                  115,
-                  112,
-                  121
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "vault_aapl",
-          "docs": [
-            "AAPL vault"
-          ],
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
-              },
-              {
-                "kind": "const",
-                "value": [
-                  97,
-                  97,
-                  112,
-                  108
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "reserve_usdc",
-          "docs": [
-            "USDC reserve (protocol liquidity)"
-          ],
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  114,
-                  101,
-                  115,
-                  101,
-                  114,
-                  118,
-                  101
-                ]
-              },
-              {
-                "kind": "const",
-                "value": [
-                  117,
-                  115,
-                  100,
-                  99
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "reserve_tsla",
-          "docs": [
-            "TSLA reserve"
-          ],
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  114,
-                  101,
-                  115,
-                  101,
-                  114,
-                  118,
-                  101
-                ]
-              },
-              {
-                "kind": "const",
-                "value": [
-                  116,
-                  115,
-                  108,
-                  97
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "reserve_spy",
-          "docs": [
-            "SPY reserve"
-          ],
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  114,
-                  101,
-                  115,
-                  101,
-                  114,
-                  118,
-                  101
-                ]
-              },
-              {
-                "kind": "const",
-                "value": [
-                  115,
-                  112,
-                  121
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "reserve_aapl",
-          "docs": [
-            "AAPL reserve"
-          ],
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  114,
-                  101,
-                  115,
-                  101,
-                  114,
-                  118,
-                  101
-                ]
-              },
-              {
-                "kind": "const",
-                "value": [
-                  97,
-                  97,
-                  112,
-                  108
-                ]
-              }
-            ]
-          }
-        },
-        {
-          "name": "token_program",
-          "docs": [
-            "Token program for transfers"
-          ],
-          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
         },
         {
           "name": "system_program",
@@ -1729,6 +1449,14 @@
           "writable": true
         },
         {
+          "name": "address_lookup_table",
+          "writable": true
+        },
+        {
+          "name": "lut_program",
+          "address": "AddressLookupTab1e1111111111111111111111111"
+        },
+        {
           "name": "arcium_program",
           "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
         },
@@ -1773,6 +1501,14 @@
           "writable": true
         },
         {
+          "name": "address_lookup_table",
+          "writable": true
+        },
+        {
+          "name": "lut_program",
+          "address": "AddressLookupTab1e1111111111111111111111111"
+        },
+        {
           "name": "arcium_program",
           "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
         },
@@ -1811,6 +1547,14 @@
             "Can't check it here as it's not initialized yet."
           ],
           "writable": true
+        },
+        {
+          "name": "address_lookup_table",
+          "writable": true
+        },
+        {
+          "name": "lut_program",
+          "address": "AddressLookupTab1e1111111111111111111111111"
         },
         {
           "name": "arcium_program",
@@ -2152,6 +1896,14 @@
           "writable": true
         },
         {
+          "name": "address_lookup_table",
+          "writable": true
+        },
+        {
+          "name": "lut_program",
+          "address": "AddressLookupTab1e1111111111111111111111111"
+        },
+        {
           "name": "arcium_program",
           "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
         },
@@ -2193,6 +1945,14 @@
           "writable": true
         },
         {
+          "name": "address_lookup_table",
+          "writable": true
+        },
+        {
+          "name": "lut_program",
+          "address": "AddressLookupTab1e1111111111111111111111111"
+        },
+        {
           "name": "arcium_program",
           "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
         },
@@ -2232,6 +1992,14 @@
         {
           "name": "comp_def_account",
           "writable": true
+        },
+        {
+          "name": "address_lookup_table",
+          "writable": true
+        },
+        {
+          "name": "lut_program",
+          "address": "AddressLookupTab1e1111111111111111111111111"
         },
         {
           "name": "arcium_program",
@@ -2278,6 +2046,14 @@
           "writable": true
         },
         {
+          "name": "address_lookup_table",
+          "writable": true
+        },
+        {
+          "name": "lut_program",
+          "address": "AddressLookupTab1e1111111111111111111111111"
+        },
+        {
           "name": "arcium_program",
           "address": "Arcj82pX7HxYKLR92qvgZUAd7vGS1k4hQvAFcPATFdEQ"
         },
@@ -2317,6 +2093,14 @@
         {
           "name": "comp_def_account",
           "writable": true
+        },
+        {
+          "name": "address_lookup_table",
+          "writable": true
+        },
+        {
+          "name": "lut_program",
+          "address": "AddressLookupTab1e1111111111111111111111111"
         },
         {
           "name": "arcium_program",
@@ -5133,16 +4917,8 @@
             }
           },
           {
-            "name": "fallback_clusters",
-            "type": {
-              "vec": "u32"
-            }
-          },
-          {
-            "name": "rejected_clusters",
-            "type": {
-              "vec": "u32"
-            }
+            "name": "lut_offset_slot",
+            "type": "u64"
           },
           {
             "name": "computation_definitions",

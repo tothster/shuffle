@@ -21,7 +21,7 @@ export const MOCK_MODE = false;
  * NOTE: This is automatically updated by setup-local.js
  */
 export const LOCALNET_CONFIG = {
-  programId: new PublicKey("DQ29rUToHVTyp2QxP3C7nt1MuYp6p6PKYNaDpGooPAFq"),
+  programId: new PublicKey("3tZMV8JhXCaVz4p8q4xgLU7RefdP438AmohAjjMWL8wH"),
   rpcUrl: "http://127.0.0.1:8899",
 };
 
@@ -30,7 +30,7 @@ export const LOCALNET_CONFIG = {
  */
 export const DEVNET_CONFIG = {
   // Active devnet deployment program ID
-  programId: new PublicKey("DzcqvoBihEcbyd1cXZwro3A6SWHJn7LccaNXcnHD8Pr1"),
+  programId: new PublicKey("3tZMV8JhXCaVz4p8q4xgLU7RefdP438AmohAjjMWL8wH"),
   rpcUrl: "https://devnet.helius-rpc.com/?api-key=a8e1a5ce-29c6-4356-b3f9-54c1c650ac08",
 
   // Arcium devnet cluster offset (v0.8.x docs)
