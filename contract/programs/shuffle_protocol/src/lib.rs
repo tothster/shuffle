@@ -45,7 +45,7 @@ const COMP_DEF_OFFSET_CALCULATE_PAYOUT: u32 = comp_def_offset("calculate_payout"
 // This is the unique address of our deployed program on Solana.
 //
 
-declare_id!("D5hXtvqYeBHM4f8DqJuYyioPNDsQS6jhSRqj9DmFFvCH");
+declare_id!("DzcqvoBihEcbyd1cXZwro3A6SWHJn7LccaNXcnHD8Pr1");
 
 // Shuffle Protocol - A privacy-preserving DeFi protocol for private DCA into tokenized stocks
 //
@@ -261,7 +261,12 @@ pub mod shuffle_protocol {
             &ctx.accounts.computation_account,
         ) {
             Ok(output) => output,
-            Err(_) => {
+            Err(err) => {
+                msg!(
+                    "accumulate_order_callback verify_output failed: {:?}, computation={}",
+                    err,
+                    ctx.accounts.computation_account.key()
+                );
                 // Clear pending_order so user can retry if MPC computation fails
                 msg!("MPC computation failed, clearing pending_order");
                 ctx.accounts.user_account.pending_order = None;
@@ -399,7 +404,14 @@ pub mod shuffle_protocol {
             &ctx.accounts.computation_account,
         ) {
             Ok(RevealBatchOutput { field_0 }) => field_0,
-            Err(_) => return Err(ErrorCode::AbortedComputation.into()),
+            Err(err) => {
+                msg!(
+                    "reveal_batch_callback verify_output failed: {:?}, computation={}",
+                    err,
+                    ctx.accounts.computation_account.key()
+                );
+                return Err(ErrorCode::AbortedComputation.into());
+            }
         };
 
         // DEBUG: Log the raw totals from MPC
@@ -609,7 +621,14 @@ pub mod shuffle_protocol {
             &ctx.accounts.computation_account,
         ) {
             Ok(output) => output,
-            Err(_) => return Err(ErrorCode::AbortedComputation.into()),
+            Err(err) => {
+                msg!(
+                    "calculate_payout_callback verify_output failed: {:?}, computation={}",
+                    err,
+                    ctx.accounts.computation_account.key()
+                );
+                return Err(ErrorCode::AbortedComputation.into());
+            }
         };
 
         // For tuple output (Enc<Shared, UserBalance>, u64):
@@ -736,7 +755,7 @@ pub mod shuffle_protocol {
         init_comp_def(
             ctx.accounts,
             Some(CircuitSource::OffChain(OffChainCircuitSource {
-                source: "https://gateway.pinata.cloud/ipfs/Qmaeq41Z2VQu6o5z4cmm4uK4EHXP14EneyTRSE33H5Vt3T".to_string(),
+                source: "https://gateway.pinata.cloud/ipfs/QmRZSmM1Bpka28fAXxevphFY5JnSRKsSotSu2oHepdwhKU".to_string(),
                 hash: circuit_hash!("accumulate_order"),
             })),
             None,
@@ -839,7 +858,14 @@ pub mod shuffle_protocol {
             &ctx.accounts.computation_account,
         ) {
             Ok(output) => output,
-            Err(_) => return Err(ErrorCode::AbortedComputation.into()),
+            Err(err) => {
+                msg!(
+                    "init_batch_state_callback verify_output failed: {:?}, computation={}",
+                    err,
+                    ctx.accounts.computation_account.key()
+                );
+                return Err(ErrorCode::AbortedComputation.into());
+            }
         };
 
         // MPC output is MXEEncryptedStruct with 12 ciphertexts (6 pairs × 2 values)
@@ -904,7 +930,14 @@ pub mod shuffle_protocol {
             &ctx.accounts.computation_account,
         ) {
             Ok(AddTogetherOutput { field_0 }) => field_0,
-            Err(_) => return Err(ErrorCode::AbortedComputation.into()),
+            Err(err) => {
+                msg!(
+                    "add_together_callback verify_output failed: {:?}, computation={}",
+                    err,
+                    ctx.accounts.computation_account.key()
+                );
+                return Err(ErrorCode::AbortedComputation.into());
+            }
         };
 
         emit!(SumEvent {
@@ -1011,7 +1044,14 @@ pub mod shuffle_protocol {
             &ctx.accounts.computation_account,
         ) {
             Ok(AddBalanceOutput { field_0 }) => field_0,
-            Err(_) => return Err(ErrorCode::AbortedComputation.into()),
+            Err(err) => {
+                msg!(
+                    "add_balance_callback verify_output failed: {:?}, computation={}",
+                    err,
+                    ctx.accounts.computation_account.key()
+                );
+                return Err(ErrorCode::AbortedComputation.into());
+            }
         };
 
         // Update the correct asset balance and nonce using pending_asset_id set during add_balance
@@ -1158,7 +1198,14 @@ pub mod shuffle_protocol {
             &ctx.accounts.computation_account,
         ) {
             Ok(output) => output,
-            Err(_) => return Err(ErrorCode::AbortedComputation.into()),
+            Err(err) => {
+                msg!(
+                    "sub_balance_callback verify_output failed: {:?}, computation={}",
+                    err,
+                    ctx.accounts.computation_account.key()
+                );
+                return Err(ErrorCode::AbortedComputation.into());
+            }
         };
 
         // Extract has_funds flag from MPC output
@@ -1360,7 +1407,14 @@ pub mod shuffle_protocol {
             &ctx.accounts.computation_account,
         ) {
             Ok(output) => output,
-            Err(_) => return Err(ErrorCode::AbortedComputation.into()),
+            Err(err) => {
+                msg!(
+                    "transfer_callback verify_output failed: {:?}, computation={}",
+                    err,
+                    ctx.accounts.computation_account.key()
+                );
+                return Err(ErrorCode::AbortedComputation.into());
+            }
         };
 
         // Tuple return creates nested struct:
@@ -1429,7 +1483,7 @@ pub struct AddTogether<'info> {
         bump,
         address = derive_sign_pda!(),
     )]
-    pub sign_pda_account: Account<'info, ArciumSignerAccount>,
+    pub sign_pda_account: Box<Account<'info, ArciumSignerAccount>>,
     #[account(
         address = derive_mxe_pda!()
     )]
@@ -1455,22 +1509,22 @@ pub struct AddTogether<'info> {
     #[account(
         address = derive_comp_def_pda!(COMP_DEF_OFFSET_ADD_TOGETHER)
     )]
-    pub comp_def_account: Account<'info, ComputationDefinitionAccount>,
+    pub comp_def_account: Box<Account<'info, ComputationDefinitionAccount>>,
     #[account(
         mut,
         address = derive_cluster_pda!(mxe_account, ErrorCode::ClusterNotSet)
     )]
-    pub cluster_account: Account<'info, Cluster>,
+    pub cluster_account: Box<Account<'info, Cluster>>,
     #[account(
         mut,
         address = ARCIUM_FEE_POOL_ACCOUNT_ADDRESS,
     )]
-    pub pool_account: Account<'info, FeePool>,
+    pub pool_account: Box<Account<'info, FeePool>>,
     #[account(
         mut,
         address = ARCIUM_CLOCK_ACCOUNT_ADDRESS
     )]
-    pub clock_account: Account<'info, ClockAccount>,
+    pub clock_account: Box<Account<'info, ClockAccount>>,
     pub system_program: Program<'info, System>,
     pub arcium_program: Program<'info, Arcium>,
 }
@@ -1614,7 +1668,7 @@ pub struct AddBalance<'info> {
         bump,
         address = derive_sign_pda!(),
     )]
-    pub sign_pda_account: Account<'info, ArciumSignerAccount>,
+    pub sign_pda_account: Box<Account<'info, ArciumSignerAccount>>,
 
     #[account(address = derive_mxe_pda!())]
     pub mxe_account: Box<Account<'info, MXEAccount>>,
@@ -1641,25 +1695,25 @@ pub struct AddBalance<'info> {
     pub computation_account: UncheckedAccount<'info>,
 
     #[account(address = derive_comp_def_pda!(COMP_DEF_OFFSET_ADD_BALANCE))]
-    pub comp_def_account: Account<'info, ComputationDefinitionAccount>,
+    pub comp_def_account: Box<Account<'info, ComputationDefinitionAccount>>,
 
     #[account(
         mut,
         address = derive_cluster_pda!(mxe_account, ErrorCode::ClusterNotSet)
     )]
-    pub cluster_account: Account<'info, Cluster>,
+    pub cluster_account: Box<Account<'info, Cluster>>,
 
     #[account(
         mut,
         address = ARCIUM_FEE_POOL_ACCOUNT_ADDRESS,
     )]
-    pub pool_account: Account<'info, FeePool>,
+    pub pool_account: Box<Account<'info, FeePool>>,
 
     #[account(
         mut,
         address = ARCIUM_CLOCK_ACCOUNT_ADDRESS
     )]
-    pub clock_account: Account<'info, ClockAccount>,
+    pub clock_account: Box<Account<'info, ClockAccount>>,
 
     pub system_program: Program<'info, System>,
     pub arcium_program: Program<'info, Arcium>,
@@ -1925,7 +1979,7 @@ pub struct SubBalance<'info> {
         bump,
         address = derive_sign_pda!(),
     )]
-    pub sign_pda_account: Account<'info, ArciumSignerAccount>,
+    pub sign_pda_account: Box<Account<'info, ArciumSignerAccount>>,
 
     #[account(address = derive_mxe_pda!())]
     pub mxe_account: Box<Account<'info, MXEAccount>>,
@@ -1952,25 +2006,25 @@ pub struct SubBalance<'info> {
     pub computation_account: UncheckedAccount<'info>,
 
     #[account(address = derive_comp_def_pda!(COMP_DEF_OFFSET_SUB_BALANCE))]
-    pub comp_def_account: Account<'info, ComputationDefinitionAccount>,
+    pub comp_def_account: Box<Account<'info, ComputationDefinitionAccount>>,
 
     #[account(
         mut,
         address = derive_cluster_pda!(mxe_account, ErrorCode::ClusterNotSet)
     )]
-    pub cluster_account: Account<'info, Cluster>,
+    pub cluster_account: Box<Account<'info, Cluster>>,
 
     #[account(
         mut,
         address = ARCIUM_FEE_POOL_ACCOUNT_ADDRESS,
     )]
-    pub pool_account: Account<'info, FeePool>,
+    pub pool_account: Box<Account<'info, FeePool>>,
 
     #[account(
         mut,
         address = ARCIUM_CLOCK_ACCOUNT_ADDRESS
     )]
-    pub clock_account: Account<'info, ClockAccount>,
+    pub clock_account: Box<Account<'info, ClockAccount>>,
 
     pub system_program: Program<'info, System>,
     pub arcium_program: Program<'info, Arcium>,
@@ -2502,7 +2556,7 @@ pub struct PlaceOrder<'info> {
         bump,
         address = derive_sign_pda!(),
     )]
-    pub sign_pda_account: Account<'info, ArciumSignerAccount>,
+    pub sign_pda_account: Box<Account<'info, ArciumSignerAccount>>,
 
     #[account(address = derive_mxe_pda!())]
     pub mxe_account: Box<Account<'info, MXEAccount>>,
@@ -2529,25 +2583,25 @@ pub struct PlaceOrder<'info> {
     pub computation_account: UncheckedAccount<'info>,
 
     #[account(address = derive_comp_def_pda!(COMP_DEF_OFFSET_ACCUMULATE_ORDER))]
-    pub comp_def_account: Account<'info, ComputationDefinitionAccount>,
+    pub comp_def_account: Box<Account<'info, ComputationDefinitionAccount>>,
 
     #[account(
         mut,
         address = derive_cluster_pda!(mxe_account, ErrorCode::ClusterNotSet)
     )]
-    pub cluster_account: Account<'info, Cluster>,
+    pub cluster_account: Box<Account<'info, Cluster>>,
 
     #[account(
         mut,
         address = ARCIUM_FEE_POOL_ACCOUNT_ADDRESS,
     )]
-    pub pool_account: Account<'info, FeePool>,
+    pub pool_account: Box<Account<'info, FeePool>>,
 
     #[account(
         mut,
         address = ARCIUM_CLOCK_ACCOUNT_ADDRESS
     )]
-    pub clock_account: Account<'info, ClockAccount>,
+    pub clock_account: Box<Account<'info, ClockAccount>>,
 
     pub system_program: Program<'info, System>,
     pub arcium_program: Program<'info, Arcium>,
@@ -2943,7 +2997,7 @@ pub struct SettleOrder<'info> {
         bump,
         address = derive_sign_pda!(),
     )]
-    pub sign_pda_account: Account<'info, ArciumSignerAccount>,
+    pub sign_pda_account: Box<Account<'info, ArciumSignerAccount>>,
 
     #[account(address = derive_mxe_pda!())]
     pub mxe_account: Box<Account<'info, MXEAccount>>,
@@ -2970,25 +3024,25 @@ pub struct SettleOrder<'info> {
     pub computation_account: UncheckedAccount<'info>,
 
     #[account(address = derive_comp_def_pda!(COMP_DEF_OFFSET_CALCULATE_PAYOUT))]
-    pub comp_def_account: Account<'info, ComputationDefinitionAccount>,
+    pub comp_def_account: Box<Account<'info, ComputationDefinitionAccount>>,
 
     #[account(
         mut,
         address = derive_cluster_pda!(mxe_account, ErrorCode::ClusterNotSet)
     )]
-    pub cluster_account: Account<'info, Cluster>,
+    pub cluster_account: Box<Account<'info, Cluster>>,
 
     #[account(
         mut,
         address = ARCIUM_FEE_POOL_ACCOUNT_ADDRESS,
     )]
-    pub pool_account: Account<'info, FeePool>,
+    pub pool_account: Box<Account<'info, FeePool>>,
 
     #[account(
         mut,
         address = ARCIUM_CLOCK_ACCOUNT_ADDRESS
     )]
-    pub clock_account: Account<'info, ClockAccount>,
+    pub clock_account: Box<Account<'info, ClockAccount>>,
 
     pub system_program: Program<'info, System>,
     pub arcium_program: Program<'info, Arcium>,

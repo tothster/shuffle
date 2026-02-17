@@ -71,6 +71,23 @@ npm run setup:local
 npm run clean
 ```
 
+### Off-Chain Circuit CID Sync
+
+When any circuit in `contract/encrypted-ixs/src/lib.rs` changes, refresh Pinata CIDs and update program sources:
+
+```bash
+cd contract
+arcium build
+export PINATA_JWT="<your-pinata-jwt>"
+./scripts/upload-circuits-to-pinata.sh
+./scripts/check-circuit-cid-consistency.sh
+```
+
+This updates:
+- `contract/build/pinata_urls.json`
+- `contract/offchain_circuits_snippet.rs`
+- `contract/programs/shuffle_protocol/src/lib.rs` (all `init_*_comp_def` URLs)
+
 ### Testing the Full Flow
 
 After `npm run setup:local` completes, test the protocol in another terminal.

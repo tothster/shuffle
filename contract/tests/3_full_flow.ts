@@ -23,7 +23,6 @@ import {
   getCompDefAccOffset,
   getArciumAccountBaseSeed,
   getArciumProgramId,
-  buildFinalizeCompDefTx,
   RescueCipher,
   deserializeLE,
   getMXEPublicKey,
@@ -48,6 +47,8 @@ import {
 import * as fs from "fs";
 import * as os from "os";
 import { expect } from "chai";
+
+process.env.ARCIUM_CLUSTER_OFFSET = process.env.ARCIUM_CLUSTER_OFFSET ?? "1234";
 
 // =============================================================================
 // TIMING CONSTANTS - Adjust these if experiencing blockhash errors
@@ -112,7 +113,7 @@ async function initCompDef(
 
   console.log(`  Initializing ${circuitName} comp def...`);
 
-  // Get LUT address for v0.7.0
+  // Get LUT address for current Arcium devnet cluster
   const arciumProgram = getArciumProgram(provider);
   const mxeAccount = getMXEAccAddress(program.programId);
   const mxeAcc = await arciumProgram.account.mxeAccount.fetch(mxeAccount);
@@ -136,21 +137,6 @@ async function initCompDef(
   // Wait for transaction to propagate
   await new Promise((resolve) => setTimeout(resolve, DELAY.AFTER_TX));
 
-  await retryWithBackoff(async () => {
-    const finalizeTx = await buildFinalizeCompDefTx(
-      provider,
-      Buffer.from(offset).readUInt32LE(),
-      program.programId
-    );
-
-    const latestBlockhash = await provider.connection.getLatestBlockhash();
-    finalizeTx.recentBlockhash = latestBlockhash.blockhash;
-    finalizeTx.lastValidBlockHeight = latestBlockhash.lastValidBlockHeight;
-    finalizeTx.sign(owner);
-
-    await provider.sendAndConfirm(finalizeTx);
-  });
-  
   console.log(`  ✓ ${circuitName} comp def initialized`);
   await new Promise((resolve) => setTimeout(resolve, DELAY.AFTER_COMP_DEF));
 }

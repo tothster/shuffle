@@ -29,8 +29,8 @@ for CIRCUIT in "${CIRCUITS[@]}"; do
     URL=$(jq -r ".\"$CIRCUIT\"" "$URLS_FILE")
     FUNC_NAME="init_${CIRCUIT}_comp_def"
 
-    # Convert snake_case to PascalCase for context name
-    CONTEXT_NAME=$(echo "$CIRCUIT" | sed 's/_\([a-z]\)/\U\1/g; s/^./\U&/')
+    # Convert snake_case to PascalCase for context name (portable across BSD/GNU tools)
+    CONTEXT_NAME=$(echo "$CIRCUIT" | perl -pe 's/(^|_)([a-z])/\U$2/g')
 
     cat >> "$SNIPPET_FILE" << EOF
 pub fn ${FUNC_NAME}(ctx: Context<Init${CONTEXT_NAME}CompDef>) -> Result<()> {

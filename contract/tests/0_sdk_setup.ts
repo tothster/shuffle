@@ -26,7 +26,6 @@ import {
   getClusterAccAddress,
   getArciumAccountBaseSeed,
   getArciumProgramId,
-  buildFinalizeCompDefTx,
   getArciumEnv,
   getMXEPublicKey,
   getLookupTableAddress,
@@ -35,6 +34,8 @@ import {
 import { ShuffleProtocol } from "../target/types/shuffle_protocol";
 import * as fs from "fs";
 import * as os from "os";
+
+process.env.ARCIUM_CLUSTER_OFFSET = process.env.ARCIUM_CLUSTER_OFFSET ?? "1234";
 
 // =============================================================================
 // HELPER: Retry with exponential backoff
@@ -87,7 +88,7 @@ async function initCompDef(
 
   console.log(`  Initializing ${circuitName} comp def...`);
 
-  // Get LUT address for v0.7.0
+  // Get LUT address for current Arcium devnet cluster
   const arciumProgram = getArciumProgram(provider);
   const mxeAccount = getMXEAccAddress(program.programId);
   const mxeAcc = await arciumProgram.account.mxeAccount.fetch(mxeAccount);
@@ -110,21 +111,6 @@ async function initCompDef(
 
   await new Promise((resolve) => setTimeout(resolve, 1500));
 
-  await retryWithBackoff(async () => {
-    const finalizeTx = await buildFinalizeCompDefTx(
-      provider,
-      Buffer.from(offset).readUInt32LE(),
-      program.programId
-    );
-
-    const latestBlockhash = await provider.connection.getLatestBlockhash();
-    finalizeTx.recentBlockhash = latestBlockhash.blockhash;
-    finalizeTx.lastValidBlockHeight = latestBlockhash.lastValidBlockHeight;
-    finalizeTx.sign(owner);
-
-    await provider.sendAndConfirm(finalizeTx);
-  });
-  
   console.log(`  ✓ ${circuitName} comp def initialized`);
   await new Promise((resolve) => setTimeout(resolve, 2000));
 }
@@ -332,7 +318,7 @@ describe("SDK Localnet Setup", function() {
           systemProgram: SystemProgram.programId,
         })
         .signers([owner])
-        .rpc({ skipPreflight: true, commitment: "confirmed" });
+        .rpc();
     });
 
     // Wait for MPC callback
@@ -511,7 +497,7 @@ describe("SDK Localnet Setup", function() {
             ),
           })
           .signers([owner, userKeypair])
-          .rpc({ skipPreflight: true, commitment: "confirmed" });
+          .rpc();
       });
 
       console.log(`      ✓ Deposited ${config.depositAmount / 1_000_000} USDC to privacy account`);

@@ -29,11 +29,11 @@ export const LOCALNET_CONFIG = {
  * Devnet program and token configuration
  */
 export const DEVNET_CONFIG = {
-  // Program ID from successful devnet deployment (2026-02-03 v0.7.0 - fresh deploy with synced IDs)
-  programId: new PublicKey("D5hXtvqYeBHM4f8DqJuYyioPNDsQS6jhSRqj9DmFFvCH"),
+  // Active devnet deployment program ID
+  programId: new PublicKey("DzcqvoBihEcbyd1cXZwro3A6SWHJn7LccaNXcnHD8Pr1"),
   rpcUrl: "https://devnet.helius-rpc.com/?api-key=a8e1a5ce-29c6-4356-b3f9-54c1c650ac08",
 
-  // Arcium cluster offset for v0.7.0 (required for account derivations)
+  // Arcium devnet cluster offset (v0.8.x docs)
   clusterOffset: 456,
   
   // Token mints - deployed 2026-02-01

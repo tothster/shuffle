@@ -6,20 +6,16 @@ resolution = true
 skip-lint = false
 
 [programs.devnet]
-shuffle_protocol = "D5hXtvqYeBHM4f8DqJuYyioPNDsQS6jhSRqj9DmFFvCH"
+shuffle_protocol = "DzcqvoBihEcbyd1cXZwro3A6SWHJn7LccaNXcnHD8Pr1"
 
 [programs.localnet]
-shuffle_protocol = "D5hXtvqYeBHM4f8DqJuYyioPNDsQS6jhSRqj9DmFFvCH"
+shuffle_protocol = "DzcqvoBihEcbyd1cXZwro3A6SWHJn7LccaNXcnHD8Pr1"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
 cluster = "localnet"
-wallet = "~/.config/solana/id.json"
-
-[provider.devnet]
-cluster = "https://devnet.helius-rpc.com/?api-key=a8e1a5ce-29c6-4356-b3f9-54c1c650ac08"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
